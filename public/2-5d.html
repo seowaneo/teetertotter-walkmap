@@ -34,14 +34,35 @@
     .return{color:#fff;text-decoration:none;border:1px solid #8ea5bd;border-radius:10px;padding:9px 11px;font-size:12px;white-space:nowrap}
     @media(max-width:650px){header{height:67px;padding:10px 13px}.main{height:calc(100% - 67px)}.panel{top:10px;left:10px;width:calc(100% - 20px);padding:12px}.panel h2{font-size:14px}.notice{left:10px;right:10px;bottom:8px;max-width:none;font-size:10px}}
   .route-select{display:flex;gap:6px;margin-top:8px}.route-select button{flex:1;padding:8px 5px;font-size:11px}.route-select button.picking{background:#0a826d;color:white}.check{flex:1;font-size:11px;display:flex;align-items:center;gap:4px}.route-card{max-height:240px;overflow:auto}.route-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}.route-metric{border-radius:8px;background:#f0f5fa;padding:8px}.route-metric b{display:block;font-size:15px}.route-card.visible{display:block}.route-warning{margin-top:6px;color:#905c1a;font-size:11px}@media(max-width:650px){.panel{max-height:68vh;overflow:auto}.route-card{max-height:130px}}
+
+    .search-wrap{margin-top:11px;border:1px solid #d8e5f0;background:#f7fafe;padding:10px;border-radius:11px}
+    .search-wrap label{font-size:11px;color:#385772;font-weight:750;display:block;margin-bottom:4px}
+    .search-input-row{display:flex;gap:5px;margin-bottom:8px}
+    .search-wrap input[type=text]{width:100%;min-width:0;padding:9px 10px;border-radius:7px;border:1px solid #c9d8e6;background:white;color:#12324f;font-size:12px}
+    .search-wrap button{white-space:nowrap;font-size:11px;padding:8px 11px;background:#184e7d;color:white;border:0}
+    .search-key-box{margin-top:3px}.search-key-box p{font-size:10px;color:#647789;margin:3px 0 7px}
+    .search-results{max-height:170px;overflow-y:auto;display:none;margin:6px 0 4px}
+    .search-results.visible{display:block}
+    .search-item{display:block;width:100%;background:white!important;color:#1c4265!important;text-align:left;border:1px solid #d6e3ec!important;margin-bottom:4px;white-space:normal!important}
+    .search-item strong{display:block;font-size:12px}.search-item small{display:block;font-size:10px;color:#5d7488;margin-top:3px}
+    .search-message{font-size:10px;color:#596e81;line-height:1.5;margin-top:5px}
   </style>
 </head>
 <body>
   <header><div><h1>같은 거리, 다른 걸음 <span style="opacity:.7;font-size:12px">2.5D 실험</span></h1><small>불광2동 · 브라우저 자체 최단거리 · 토블러 경로 계산</small></div><a class="return" href="./">메인으로</a></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
-    <section class="panel"><div class="eyebrow">WALK ROUTING / v0.5</div><h2>출발·도착을 선택하고 길을 비교하세요</h2>
+    <section class="panel"><div class="eyebrow">WALK ROUTING / v0.6 · 장소 검색</div><h2>출발·도착을 선택하고 길을 비교하세요</h2>
       <div class="modes"><button id="flat">2D 평면</button><button id="tilt" class="active">2.5D 입체</button></div>
       <div class="row"><span class="dot start"></span>출발 <span id="start-label">새장골경로당</span> <span style="color:#98a8b7">→</span> 도착 <span id="end-label">연서시장</span></div>
+
+      <div class="search-wrap" id="search-wrap">
+        <label for="place-query">장소명 또는 주소 검색</label>
+        <div class="search-input-row"><input id="place-query" type="text" placeholder="예: 연서시장, 불광동 92-4" autocomplete="off"><button id="place-search" type="button">검색</button></div>
+        <div class="search-input-row"><button type="button" id="search-as-start" class="active">출발지로 설정</button><button type="button" id="search-as-end">목적지로 설정</button></div>
+        <div class="search-key-box" id="search-key-box"><label for="kakao-js-key">카카오 JavaScript 키 (최초 1회 입력)</label><input type="text" id="kakao-js-key" placeholder="REST API 키가 아닌 JavaScript 키"><p>키는 이 탭에서만 보관하며 GitHub 파일·서버에 저장하지 않습니다. 카카오에 등록된 도메인에서 사용하세요.</p></div>
+        <div id="search-results" class="search-results" aria-live="polite"></div>
+        <div class="search-message" id="search-message">현재는 불광2동 도로망 안에서만 길찾기가 가능합니다. 검색되는 모든 장소가 길찾기 가능한 것은 아닙니다.</div>
+      </div>
       <div class="route-select"><button type="button" id="pick-start">지도에서 출발 선택</button><button type="button" id="pick-end">지도에서 도착 선택</button></div>
       <div class="route-select"><button type="button" id="reset-points">기본 지점 복원</button><label class="check"><input type="checkbox" id="avoid-stairs"> 표시된 계단 제외</label></div>
       <button class="route-btn" id="show-route" disabled>보행 도로망 불러오는 중…</button>
@@ -85,6 +106,89 @@
       const slopeSourceId='teetertotter-slopes',slopeLayerId='teetertotter-slope-segments';
       let reverseEdges=null, lastEasiest=null;
       let graph=null, adj=null, pickMode=null, selectedStart=start.slice(), selectedEnd=end.slice(), shown=true;
+
+      // v0.6 Places/address search. Uses the browser Kakao Maps JavaScript services library,
+      // not a REST/admin key. Results are transient; never saved as a place database.
+      const searchInput=document.getElementById('place-query');
+      const searchButton=document.getElementById('place-search');
+      const searchResults=document.getElementById('search-results');
+      const searchMessage=document.getElementById('search-message');
+      const keyInput=document.getElementById('kakao-js-key');
+      const searchStart=document.getElementById('search-as-start');
+      const searchEnd=document.getElementById('search-as-end');
+      let searchTarget='start',placesClient=null,geocoderClient=null,loadingSdk=null,searchSeq=0;
+      function setSearchTarget(t){searchTarget=t;searchStart.classList.toggle('active',t==='start');searchEnd.classList.toggle('active',t==='end')}
+      searchStart.addEventListener('click',()=>setSearchTarget('start'));
+      searchEnd.addEventListener('click',()=>setSearchTarget('end'));
+      function searchMsg(text,bad=false){searchMessage.textContent=text;searchMessage.style.color=bad?'#af4534':'#596e81'}
+      function attachSearchSdk(){
+        if(window.kakao?.maps?.services)return Promise.resolve();
+        if(loadingSdk)return loadingSdk;
+        const key=keyInput.value.trim();
+        if(!key)return Promise.reject(new Error('카카오 JavaScript 키를 먼저 입력하세요.'));
+        loadingSdk=new Promise((resolve,reject)=>{
+          const script=document.createElement('script');
+          script.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+encodeURIComponent(key)+'&autoload=false&libraries=services';
+          script.async=true;
+          script.onload=()=>{
+            if(!window.kakao?.maps){reject(new Error('카카오 SDK가 로드되지 않았습니다. 도메인 및 앱 설정을 확인하세요.'));return}
+            window.kakao.maps.load(()=>window.kakao?.maps?.services?resolve():reject(new Error('장소 검색 라이브러리를 초기화하지 못했습니다.')));
+          };
+          script.onerror=()=>reject(new Error('카카오 검색 SDK 연결 실패: 네트워크 및 등록 도메인을 확인하세요.'));
+          document.head.appendChild(script);
+        }).catch(err=>{loadingSdk=null;throw err});
+        return loadingSdk;
+      }
+      const searchAsPromise=(executor)=>new Promise(executor);
+      function renderSearchResults(items){
+        searchResults.replaceChildren();
+        searchResults.classList.toggle('visible',items.length>0);
+        for(const item of items){
+          const b=document.createElement('button');b.type='button';b.className='search-item';
+          const strong=document.createElement('strong');strong.textContent=item.name;
+          const small=document.createElement('small');small.textContent=item.address||'주소 정보 없음';
+          b.append(strong,small);
+          b.addEventListener('click',()=>{
+            if(!graph){searchMsg('도로망 데이터 로딩이 끝난 후 선택할 수 있습니다.',true);return}
+            const coord=[item.lng,item.lat],snapped=nearestNode(coord);
+            if(!Number.isFinite(snapped.d)||snapped.d>90){
+              searchMsg('이 장소는 현재 길찾기 지원 구역 밖이거나 보행로에서 '+Math.round(snapped.d)+'m 떨어져 있습니다. 서울시 도로망 확장 후 지원할 수 있습니다.',true);
+              map.flyTo({center:coord,zoom:15});return;
+            }
+            if(searchTarget==='start'){selectedStart=coord;startLabel.textContent=item.name}
+            else{selectedEnd=coord;endLabel.textContent=item.name}
+            setPick(null);updatePointMarkers();recompute();
+            searchResults.classList.remove('visible');
+            searchMsg(item.name+'을(를) '+(searchTarget==='start'?'출발지':'목적지')+'로 설정했습니다. 입구·도보 연결은 현장 확인이 필요합니다.');
+          });
+          searchResults.appendChild(b);
+        }
+      }
+      async function runPlaceSearch(){
+        const seq=++searchSeq,query=searchInput.value.trim();
+        if(query.length<2){searchMsg('검색어를 두 글자 이상 입력해 주세요.',true);return}
+        searchButton.disabled=true;searchMsg('장소와 주소를 검색하는 중…');renderSearchResults([]);
+        try{
+          await attachSearchSdk();
+          placesClient??=new kakao.maps.services.Places();
+          geocoderClient??=new kakao.maps.services.Geocoder();
+          const status=kakao.maps.services.Status;
+          const results=await Promise.all([
+            searchAsPromise(resolve=>placesClient.keywordSearch(query,(items,s)=>resolve(s===status.OK?items:[]),{size:10})),
+            searchAsPromise(resolve=>geocoderClient.addressSearch(query,(items,s)=>resolve(s===status.OK?items:[])))
+          ]);
+          if(seq!==searchSeq)return;
+          const normalized=[];
+          for(const p of results[0])normalized.push({name:p.place_name,address:p.road_address_name||p.address_name,lng:Number(p.x),lat:Number(p.y)});
+          for(const p of results[1])normalized.push({name:p.address_name,address:p.address_name,lng:Number(p.x),lat:Number(p.y)});
+          const uniq=new Map();for(const p of normalized)if(Number.isFinite(p.lng)&&Number.isFinite(p.lat))uniq.set(p.name+'|'+p.lng.toFixed(5)+'|'+p.lat.toFixed(5),p);
+          const list=[...uniq.values()].slice(0,12);
+          renderSearchResults(list);
+          searchMsg(list.length?'목록에서 장소를 눌러 '+(searchTarget==='start'?'출발지':'목적지')+'로 설정하세요.':'검색 결과가 없습니다. 장소명이나 정확한 도로명주소로 다시 검색해 주세요.');
+        }catch(err){searchMsg(err.message,true)}finally{searchButton.disabled=false}
+      }
+      searchButton.addEventListener('click',runPlaceSearch);
+      searchInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();runPlaceSearch()}});
       const graphUrl=new URL('./data/walk_graph.json',location.href);
       function haversineApprox(a,b){return Math.hypot((a[0]-b[0])*88000,(a[1]-b[1])*111200)}
       function nearestNode(pos){
