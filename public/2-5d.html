@@ -57,7 +57,59 @@
       marker(start,'#008e78','새장골경로당 (대표 좌표)');marker(end,'#e36d42','연서시장 (대표 좌표)');
       const bounds=new maplibregl.LngLatBounds(start,start);bounds.extend(end);
       map.fitBounds(bounds,{padding:{top:170,bottom:80,left:50,right:50},maxZoom:15.5,duration:0});
+      // v0.3.1: Load and draw the actual precomputed GeoJSON route.
+      const routeButton = document.getElementById('show-route');
+      const routeCard = document.getElementById('route-card');
+      let routeVisible = false;
+      let routeReady = false;
+      const routeSourceId = 'teetertotter-pilot-route';
+      const routeLayerId = 'teetertotter-pilot-route-line';
+      const routeUrl = new URL('./data/pilot_routes.geojson', window.location.href);
+      routeCard.textContent = '실험용 경로 파일을 확인하고 있습니다.';
+      function showRouteError(message) {
+        routeButton.disabled = true;
+        routeButton.textContent = '경로 데이터 연결 실패';
+        routeCard.textContent = '경로 오류: ' + message + ' / 파일: ' + routeUrl.pathname;
+        console.error('Pilot route:', message, routeUrl.href);
+      }
+      async function loadPilotRoute() {
+        try {
+          const response = await fetch(routeUrl.href, {cache: 'no-cache'});
+          if (!response.ok) throw new Error('HTTP ' + response.status + ' — 파일 경로를 확인해 주세요');
+          const data = await response.json();
+          if (data?.type !== 'FeatureCollection' || !Array.isArray(data.features))
+            throw new Error('GeoJSON FeatureCollection 형식이 아닙니다');
+          const shortest = data.features.find(f => f?.properties?.route === 'shortest' && f?.geometry?.type === 'LineString');
+          if (!shortest || !Array.isArray(shortest.geometry.coordinates) || shortest.geometry.coordinates.length < 2)
+            throw new Error('shortest LineString 경로가 없습니다');
+          // Pilot's shortest and Tobler path overlap. Show one trustworthy line.
+          const routeData = {type:'FeatureCollection',features:[shortest]};
+          map.addSource(routeSourceId, {type:'geojson',data:routeData});
+          map.addLayer({id:routeLayerId,type:'line',source:routeSourceId,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1689ff','line-width':7,'line-opacity':0.96},filter:['==',['geometry-type'],'LineString']});
+          map.setLayoutProperty(routeLayerId, 'visibility', 'none');
+          routeReady = true;
+          routeButton.disabled = false;
+          routeButton.textContent = '시험용 계산 경로 표시';
+          const dist = Number(shortest.properties?.distance_m);
+          const mins = Number(shortest.properties?.tobler_minutes_known_sections);
+          routeCard.textContent = `최단거리와 토블러 최소시간 경로 동일 · ${Number.isFinite(dist)?dist.toFixed(1)+'m':'거리 미확인'} · 토블러 기본 ${Number.isFinite(mins)?mins.toFixed(1)+'분':'시간 미확인'}. 출입구 연결 및 계단 검증 전.`;
+          routeButton.onclick = () => {
+            if (!routeReady) return;
+            routeVisible = !routeVisible;
+            map.setLayoutProperty(routeLayerId,'visibility',routeVisible?'visible':'none');
+            routeButton.textContent = routeVisible?'계산 경로 숨기기':'시험용 계산 경로 표시';
+            if (routeVisible) {
+              const b=new maplibregl.LngLatBounds();
+              shortest.geometry.coordinates.forEach(p=>b.extend(p));
+              map.fitBounds(b,{padding:{top:130,bottom:90,left:Math.min(420,window.innerWidth*.32),right:50},duration:650,maxZoom:16});
+            }
+          };
+        } catch(error) {
+          showRouteError(error instanceof Error ? error.message : String(error));
+        }
+      }
       map.on('load',()=>{
+        loadPilotRoute();
         let extruded=false;
         const style=map.getStyle();
         const vectorSources=Object.entries(style.sources||{}).filter(([,s])=>s.type==='vector');
