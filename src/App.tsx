@@ -4,7 +4,7 @@ import {loadKakaoMap} from './kakao'
 import {places} from './places'
 const origin=places[0]
 const destination=places[1]
-const initialKey=import.meta.env.VITE_KAKAO_MAP_KEY || ''
+const initialKey = ''
 export default function App(){
  const mapEl=useRef<HTMLDivElement|null>(null)
  const [key,setKey]=useState(initialKey)
