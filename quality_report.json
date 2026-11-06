@@ -1,0 +1,29 @@
+{
+  "features_in_source": 831,
+  "graph_nodes": 3323,
+  "graph_undirected_segments": 3643,
+  "elevation_available_segments": 3619,
+  "elevation_missing_segments": 24,
+  "snap_start_m": 20.007301930875304,
+  "snap_end_m": 24.930485747960148,
+  "routes": [
+    {
+      "route": "shortest",
+      "distance_m": 958.1,
+      "tobler_minutes_known_sections": 10.99,
+      "missing_elevation_segments": 0,
+      "is_pilot": true,
+      "snapped_start_m": 20.0,
+      "snapped_end_m": 24.9
+    },
+    {
+      "route": "tobler",
+      "distance_m": 958.1,
+      "tobler_minutes_known_sections": 10.99,
+      "missing_elevation_segments": 0,
+      "is_pilot": true,
+      "snapped_start_m": 20.0,
+      "snapped_end_m": 24.9
+    }
+  ]
+}
