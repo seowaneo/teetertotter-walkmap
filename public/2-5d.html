@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#102743" />
+  <title>2.5D 지도 실험 · 같은 거리, 다른 걸음</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.css" />
+  <style>
+    *{box-sizing:border-box}html,body{height:100%;margin:0;font-family:system-ui,'Noto Sans KR',sans-serif;color:#12283e;background:#eef3f8}
+    header{height:70px;display:flex;align-items:center;justify-content:space-between;padding:12px 22px;color:#fff;background:#102743;gap:12px}
+    h1{font-size:18px;letter-spacing:-.025em;margin:0}header small{color:#adcae4;display:block;margin-top:3px;font-size:11px}
+    .main{position:relative;height:calc(100% - 70px)}#map{position:absolute;inset:0}
+    .panel{position:absolute;top:14px;left:14px;z-index:3;background:#fff;max-width:340px;width:calc(100% - 28px);border:1px solid #dfebf2;border-radius:16px;padding:15px;box-shadow:0 12px 35px #061b3140}
+    .eyebrow{font-size:10px;letter-spacing:.12em;color:#5c80a2;font-weight:800}.panel h2{font-size:16px;margin:6px 0 11px}.modes{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+    button{border:1px solid #cbd8e5;border-radius:9px;background:#fff;font-size:13px;font-weight:700;color:#213e59;padding:10px 9px;cursor:pointer}
+    button.active{background:#184e7d;border-color:#184e7d;color:white}
+    .row{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:#425a70}.dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}.start{background:#008e78}.end{background:#e36d42}
+    .hint{font-size:11px;line-height:1.65;color:#60788d;margin:10px 0 0}.state{font-size:11px;color:#718295;margin-top:10px}.state.bad{color:#b13e37}
+    .notice{position:absolute;bottom:17px;left:14px;z-index:3;background:#fffdf0ee;padding:10px 12px;border-radius:10px;font-size:11px;max-width:500px;line-height:1.55;color:#775b28;border:1px solid #e4d7a4}
+    .return{color:#fff;text-decoration:none;border:1px solid #8ea5bd;border-radius:10px;padding:9px 11px;font-size:12px;white-space:nowrap}
+    @media(max-width:650px){header{height:67px;padding:10px 13px}.main{height:calc(100% - 67px)}.panel{top:10px;left:10px;width:calc(100% - 20px);padding:12px}.panel h2{font-size:14px}.notice{left:10px;right:10px;bottom:8px;max-width:none;font-size:10px}}
+  </style>
+</head>
+<body>
+  <header><div><h1>같은 거리, 다른 걸음 <span style="opacity:.7;font-size:12px">2.5D 실험</span></h1><small>불광2동 · 지도 렌더링 기능 검증</small></div><a class="return" href="./">메인으로</a></header>
+  <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
+    <section class="panel"><div class="eyebrow">MAP EXPERIMENT / v0.2</div><h2>지도를 기울여 건물을 살펴보세요</h2>
+      <div class="modes"><button id="flat">2D 평면</button><button id="tilt" class="active">2.5D 입체</button></div>
+      <div class="row"><span class="dot start"></span>새장골경로당 <span style="color:#98a8b7">→</span><span class="dot end"></span>연서시장</div>
+      <p class="hint">드래그해 이동하고, Ctrl+드래그(또는 마우스 오른쪽 드래그)로 시점을 바꿀 수 있습니다. 건물 높이는 공개 지도에 존재하는 값만 사용하며, 없는 경우 임의로 보충하지 않습니다.</p>
+      <div class="state" id="state">지도 리소스를 불러오는 중...</div>
+    </section>
+    <div class="notice">이 화면은 2.5D 표시 기술 시험입니다. 실제 경사 DEM, 계단, 고령자 체감거리, 경로 계산 결과가 아닙니다. 외부 지도 서버 연결이 필요합니다.</div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
+  <script>
+  (function(){
+    const state=document.getElementById('state');
+    const setState=(s,bad=false)=>{state.textContent=s;state.className='state'+(bad?' bad':'')};
+    if(!window.maplibregl){setState('지도 라이브러리 연결 실패: CDN 접속을 확인하세요.',true);return}
+    const start=[126.9277516,37.6254199],end=[126.9220428,37.6194408];
+    let map;
+    try{
+      map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[126.925,37.6225],zoom:15.2,pitch:56,bearing:-18,antialias:true,maxPitch:70,attributionControl:true});
+      map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
+      const marker=(coords,color,label)=>{
+        const el=document.createElement('div');el.style.cssText=`width:18px;height:18px;border-radius:50%;background:${color};border:3px solid white;box-shadow:0 1px 8px #0007;`;
+        new maplibregl.Marker({element:el}).setLngLat(coords).setPopup(new maplibregl.Popup({offset:15}).setText(label)).addTo(map)
+      };
+      marker(start,'#008e78','새장골경로당 (대표 좌표)');marker(end,'#e36d42','연서시장 (대표 좌표)');
+      const bounds=new maplibregl.LngLatBounds(start,start);bounds.extend(end);
+      map.fitBounds(bounds,{padding:{top:170,bottom:80,left:50,right:50},maxZoom:15.5,duration:0});
+      map.on('load',()=>{
+        let extruded=false;
+        const style=map.getStyle();
+        const vectorSources=Object.entries(style.sources||{}).filter(([,s])=>s.type==='vector');
+        const source=vectorSources.find(([id])=>id==='openmaptiles')?.[0] || vectorSources[0]?.[0];
+        try{
+          if(source){
+            map.addLayer({id:'teetertotter-buildings',type:'fill-extrusion',source,'source-layer':'building',minzoom:14,
+              filter:['all',['has','render_height']],paint:{'fill-extrusion-color':'#b0bfca','fill-extrusion-height':['to-number',['get','render_height']], 'fill-extrusion-base':['to-number',['coalesce',['get','render_min_height'],0]],'fill-extrusion-opacity':0.79}},
+              (style.layers||[]).find(l=>l.type==='symbol')?.id);
+            extruded=true;
+          }
+        }catch(e){console.warn('Building layer not available',e)}
+        setState(extruded?'기본 지도 로딩 완료 · 높이 데이터가 있는 건물만 입체 표시':'기본 지도 로딩 완료 · 해당 타일에서 건물 입체 레이어를 사용할 수 없음');
+        updateButtons();
+      });
+      map.on('error',e=>{console.error(e.error||e);setState('지도 리소스 오류: '+(e.error?.message||'네트워크·지도 서버 확인 필요'),true)});
+      function updateButtons(){document.getElementById('flat').classList.toggle('active',map.getPitch()<10);document.getElementById('tilt').classList.toggle('active',map.getPitch()>=10)}
+      document.getElementById('flat').onclick=()=>{map.easeTo({pitch:0,bearing:0,duration:650});document.getElementById('flat').classList.add('active');document.getElementById('tilt').classList.remove('active')};
+      document.getElementById('tilt').onclick=()=>{map.easeTo({pitch:56,bearing:-18,duration:650});document.getElementById('flat').classList.remove('active');document.getElementById('tilt').classList.add('active')};
+    }catch(e){setState('지도 생성 실패: '+e.message,true)}
+  })();
+  </script>
+</body>
+</html>
