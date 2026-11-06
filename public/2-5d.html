@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#102743" />
-  <title>2.5D 지도 실험 · 같은 거리, 다른 걸음</title>
+  <title>자체 길찾기 실험 · 같은 거리, 다른 걸음</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.css" />
   <style>
     *{box-sizing:border-box}html,body{height:100%;margin:0;font-family:system-ui,'Noto Sans KR',sans-serif;color:#12283e;background:#eef3f8}
@@ -24,20 +24,23 @@
     .notice{position:absolute;bottom:17px;left:14px;z-index:3;background:#fffdf0ee;padding:10px 12px;border-radius:10px;font-size:11px;max-width:500px;line-height:1.55;color:#775b28;border:1px solid #e4d7a4}
     .return{color:#fff;text-decoration:none;border:1px solid #8ea5bd;border-radius:10px;padding:9px 11px;font-size:12px;white-space:nowrap}
     @media(max-width:650px){header{height:67px;padding:10px 13px}.main{height:calc(100% - 67px)}.panel{top:10px;left:10px;width:calc(100% - 20px);padding:12px}.panel h2{font-size:14px}.notice{left:10px;right:10px;bottom:8px;max-width:none;font-size:10px}}
+  .route-select{display:flex;gap:6px;margin-top:8px}.route-select button{flex:1;padding:8px 5px;font-size:11px}.route-select button.picking{background:#0a826d;color:white}.check{flex:1;font-size:11px;display:flex;align-items:center;gap:4px}.route-card{max-height:240px;overflow:auto}.route-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}.route-metric{border-radius:8px;background:#f0f5fa;padding:8px}.route-metric b{display:block;font-size:15px}.route-card.visible{display:block}.route-warning{margin-top:6px;color:#905c1a;font-size:11px}@media(max-width:650px){.panel{max-height:68vh;overflow:auto}.route-card{max-height:130px}}
   </style>
 </head>
 <body>
-  <header><div><h1>같은 거리, 다른 걸음 <span style="opacity:.7;font-size:12px">2.5D 실험</span></h1><small>불광2동 · 지도 렌더링 기능 검증</small></div><a class="return" href="./">메인으로</a></header>
+  <header><div><h1>같은 거리, 다른 걸음 <span style="opacity:.7;font-size:12px">2.5D 실험</span></h1><small>불광2동 · 브라우저 자체 최단거리 · 토블러 경로 계산</small></div><a class="return" href="./">메인으로</a></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
-    <section class="panel"><div class="eyebrow">MAP EXPERIMENT / v0.2</div><h2>지도를 기울여 건물을 살펴보세요</h2>
+    <section class="panel"><div class="eyebrow">WALK ROUTING / v0.4</div><h2>출발·도착을 선택하고 길을 비교하세요</h2>
       <div class="modes"><button id="flat">2D 평면</button><button id="tilt" class="active">2.5D 입체</button></div>
-      <div class="row"><span class="dot start"></span>새장골경로당 <span style="color:#98a8b7">→</span><span class="dot end"></span>연서시장</div>
-      <button class="route-btn" id="show-route" disabled>계산 경로 불러오는 중…</button>
+      <div class="row"><span class="dot start"></span>출발 <span id="start-label">새장골경로당</span> <span style="color:#98a8b7">→</span> 도착 <span id="end-label">연서시장</span></div>
+      <div class="route-select"><button type="button" id="pick-start">지도에서 출발 선택</button><button type="button" id="pick-end">지도에서 도착 선택</button></div>
+      <div class="route-select"><button type="button" id="reset-points">기본 지점 복원</button><label class="check"><input type="checkbox" id="avoid-stairs"> 표시된 계단 제외</label></div>
+      <button class="route-btn" id="show-route" disabled>보행 도로망 불러오는 중…</button>
       <div id="route-card" class="route-card" aria-live="polite"></div>
       <p class="hint">드래그해 이동하고, Ctrl+드래그(또는 마우스 오른쪽 드래그)로 시점을 바꿀 수 있습니다. 건물 높이는 공개 지도에 존재하는 값만 사용하며, 없는 경우 임의로 보충하지 않습니다.</p>
       <div class="state" id="state">지도 리소스를 불러오는 중...</div>
     </section>
-    <div class="notice">시험용 OSM+DEM 경로를 표시합니다. 출발·도착 건물 출입구 연결과 계단 검증 전이며 안전한 길을 보증하지 않습니다.</div>
+    <div class="notice">실험용 OSM+보간 DEM 기반 길찾기입니다. 출입구·횡단·계단 누락 가능. 현장 검증 전, 실제 보행 안내로 사용하지 마세요.</div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
   <script>
@@ -54,62 +57,120 @@
         const el=document.createElement('div');el.style.cssText=`width:18px;height:18px;border-radius:50%;background:${color};border:3px solid white;box-shadow:0 1px 8px #0007;`;
         new maplibregl.Marker({element:el}).setLngLat(coords).setPopup(new maplibregl.Popup({offset:15}).setText(label)).addTo(map)
       };
-      marker(start,'#008e78','새장골경로당 (대표 좌표)');marker(end,'#e36d42','연서시장 (대표 좌표)');
+      // Dynamic markers are created after graph loading.
       const bounds=new maplibregl.LngLatBounds(start,start);bounds.extend(end);
       map.fitBounds(bounds,{padding:{top:170,bottom:80,left:50,right:50},maxZoom:15.5,duration:0});
-      // v0.3.1: Load and draw the actual precomputed GeoJSON route.
-      const routeButton = document.getElementById('show-route');
-      const routeCard = document.getElementById('route-card');
-      let routeVisible = false;
-      let routeReady = false;
-      const routeSourceId = 'teetertotter-pilot-route';
-      const routeLayerId = 'teetertotter-pilot-route-line';
-      const routeUrl = new URL('./data/pilot_routes.geojson', window.location.href);
-      routeCard.textContent = '실험용 경로 파일을 확인하고 있습니다.';
-      function showRouteError(message) {
-        routeButton.disabled = true;
-        routeButton.textContent = '경로 데이터 연결 실패';
-        routeCard.textContent = '경로 오류: ' + message + ' / 파일: ' + routeUrl.pathname;
-        console.error('Pilot route:', message, routeUrl.href);
+      // v0.4: Preprocessed OSM graph + Tobler minute weights, computed inside the browser.
+      // The routing graph is static, but search, destination changes and shortest paths are dynamic.
+      const routeButton=document.getElementById('show-route');
+      const card=document.getElementById('route-card');
+      const startLabel=document.getElementById('start-label');
+      const endLabel=document.getElementById('end-label');
+      const stairsBox=document.getElementById('avoid-stairs');
+      const sourceId='teetertotter-dynamic';
+      const lineIds=['teetertotter-shortest','teetertotter-tobler'];
+      let graph=null, adj=null, pickMode=null, selectedStart=start.slice(), selectedEnd=end.slice(), shown=true;
+      const graphUrl=new URL('./data/walk_graph.json',location.href);
+      function haversineApprox(a,b){return Math.hypot((a[0]-b[0])*88000,(a[1]-b[1])*111200)}
+      function nearestNode(pos){
+        let best=-1, dist=Infinity;
+        graph.nodes.forEach((p,i)=>{const n=haversineApprox(pos,p);if(n<dist){dist=n;best=i}});
+        return {i:best,d:dist};
       }
-      async function loadPilotRoute() {
-        try {
-          const response = await fetch(routeUrl.href, {cache: 'no-cache'});
-          if (!response.ok) throw new Error('HTTP ' + response.status + ' — 파일 경로를 확인해 주세요');
-          const data = await response.json();
-          if (data?.type !== 'FeatureCollection' || !Array.isArray(data.features))
-            throw new Error('GeoJSON FeatureCollection 형식이 아닙니다');
-          const shortest = data.features.find(f => f?.properties?.route === 'shortest' && f?.geometry?.type === 'LineString');
-          if (!shortest || !Array.isArray(shortest.geometry.coordinates) || shortest.geometry.coordinates.length < 2)
-            throw new Error('shortest LineString 경로가 없습니다');
-          // Pilot's shortest and Tobler path overlap. Show one trustworthy line.
-          const routeData = {type:'FeatureCollection',features:[shortest]};
-          map.addSource(routeSourceId, {type:'geojson',data:routeData});
-          map.addLayer({id:routeLayerId,type:'line',source:routeSourceId,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1689ff','line-width':7,'line-opacity':0.96},filter:['==',['geometry-type'],'LineString']});
-          map.setLayoutProperty(routeLayerId, 'visibility', 'none');
-          routeReady = true;
-          routeButton.disabled = false;
-          routeButton.textContent = '시험용 계산 경로 표시';
-          const dist = Number(shortest.properties?.distance_m);
-          const mins = Number(shortest.properties?.tobler_minutes_known_sections);
-          routeCard.textContent = `최단거리와 토블러 최소시간 경로 동일 · ${Number.isFinite(dist)?dist.toFixed(1)+'m':'거리 미확인'} · 토블러 기본 ${Number.isFinite(mins)?mins.toFixed(1)+'분':'시간 미확인'}. 출입구 연결 및 계단 검증 전.`;
-          routeButton.onclick = () => {
-            if (!routeReady) return;
-            routeVisible = !routeVisible;
-            map.setLayoutProperty(routeLayerId,'visibility',routeVisible?'visible':'none');
-            routeButton.textContent = routeVisible?'계산 경로 숨기기':'시험용 계산 경로 표시';
-            if (routeVisible) {
-              const b=new maplibregl.LngLatBounds();
-              shortest.geometry.coordinates.forEach(p=>b.extend(p));
-              map.fitBounds(b,{padding:{top:130,bottom:90,left:Math.min(420,window.innerWidth*.32),right:50},duration:650,maxZoom:16});
-            }
-          };
-        } catch(error) {
-          showRouteError(error instanceof Error ? error.message : String(error));
+      class MinHeap{
+        constructor(){this.a=[]}
+        push(item){let a=this.a;a.push(item);let i=a.length-1;while(i>0){const p=(i-1)>>1;if(a[p][0]<=item[0])break;a[i]=a[p];i=p}a[i]=item}
+        pop(){let a=this.a;if(!a.length)return null;const result=a[0],last=a.pop();if(a.length){let i=0;while(2*i+1<a.length){let ch=2*i+1;if(ch+1<a.length && a[ch+1][0]<a[ch][0])ch++;if(a[ch][0]>=last[0])break;a[i]=a[ch];i=ch}a[i]=last}return result}
+        get size(){return this.a.length}
+      }
+      function dijkstra(from,to,weight,avoidSteps){
+        const n=graph.nodes.length,dist=new Float64Array(n);dist.fill(Infinity);
+        const prev=new Int32Array(n),used=new Int32Array(n);prev.fill(-1);used.fill(-1);
+        const pq=new MinHeap();dist[from]=0;pq.push([0,from]);
+        while(pq.size){const [cur,u]=pq.pop();if(cur>dist[u]+1e-9)continue;if(u===to)break;
+          for(const edgeIndex of adj[u]){const edge=graph.edges[edgeIndex];if(avoidSteps && edge[4]===1)continue;
+            const cost=weight==='time'?edge[3]:edge[2];if(cost===null || cost<0 || !Number.isFinite(cost))continue;
+            const v=edge[1],cand=cur+cost;if(cand<dist[v]-1e-9){dist[v]=cand;prev[v]=u;used[v]=edgeIndex;pq.push([cand,v])}
+          }
+        }
+        if(!Number.isFinite(dist[to]))return null;
+        let path=[],cursor=to;while(cursor!==from){const edgeIndex=used[cursor];if(edgeIndex<0)return null;path.push(edgeIndex);cursor=prev[cursor]}
+        path.reverse();const coords=[graph.nodes[from]];let meters=0,minutes=0,missing=0,steps=0;
+        for(const k of path){let e=graph.edges[k];coords.push(graph.nodes[e[1]]);meters+=e[2];if(e[3]===null)missing++;else minutes+=e[3];if(e[4]===1)steps++}
+        return {coords,meters,minutes,missing,steps};
+      }
+      function routeHTML(shortest,easiest,sa,ea){
+        const fmt=(r)=>r?`${Math.round(r.meters).toLocaleString()}m`:'탐색 불가';
+        const time=(r)=>r && r.missing===0 ? `${r.minutes.toFixed(1)}분`:'확인 불가';
+        const same=shortest && easiest && shortest.coords.length===easiest.coords.length && shortest.coords.every((p,i)=>p[0]===easiest.coords[i][0] && p[1]===easiest.coords[i][1]);
+        const warnings=[];
+        if(sa.d>50||ea.d>50)warnings.push(`도로망까지 직선 연결거리 출발 ${Math.round(sa.d)}m · 도착 ${Math.round(ea.d)}m (경로 미포함)`);
+        if(shortest?.missing)warnings.push('최단 경로 일부 고도 미확인: 예상 시간 생략');
+        if(!easiest)warnings.push('확인된 고도 구간만으로는 토블러 경로가 연결되지 않습니다');
+        warnings.push('OSM에 표시되지 않은 계단·횡단보도·통행 제한은 반영되지 않았습니다');
+        return `<div class="route-grid"><div class="route-metric"><span>🔵 최단거리</span><b>${fmt(shortest)}</b><span>기본 토블러 ${time(shortest)}</span></div><div class="route-metric"><span>🟠 토블러 최소시간</span><b>${fmt(easiest)}</b><span>기본 토블러 ${time(easiest)}</span></div></div><div class="route-warning">${same?'두 경로가 동일한 도로를 지납니다. ':''}${warnings.join(' / ')}</div>`;
+      }
+      function updateLayers(features){
+        const source=map.getSource(sourceId);
+        const geojson={type:'FeatureCollection',features};
+        if(source)source.setData(geojson);else{
+          map.addSource(sourceId,{type:'geojson',data:geojson});
+          map.addLayer({id:lineIds[0],type:'line',source:sourceId,filter:['==',['get','kind'],'short'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1689ff','line-width':7,'line-opacity':0.92}});
+          map.addLayer({id:lineIds[1],type:'line',source:sourceId,filter:['==',['get','kind'],'easy'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#e68a20','line-width':5,'line-dasharray':[2,1.5]}});
         }
       }
+      const pointMarkers=[];
+      function updatePointMarkers(){
+        for(const m of pointMarkers)m.remove();pointMarkers.length=0;
+        for(const [coords,color,title] of [[selectedStart,'#008e78','선택한 출발점'],[selectedEnd,'#e36d42','선택한 도착점']]){
+          const el=document.createElement('div');el.style.cssText=`width:19px;height:19px;background:${color};border:3px solid white;border-radius:50%;box-shadow:0 2px 8px #0005`;
+          pointMarkers.push(new maplibregl.Marker({element:el}).setLngLat(coords).setPopup(new maplibregl.Popup().setText(title)).addTo(map));
+        }
+      }
+      function recompute(){
+        if(!graph)return;
+        try{
+          const s=nearestNode(selectedStart),t=nearestNode(selectedEnd);
+          const avoid=stairsBox.checked;
+          const shortest=dijkstra(s.i,t.i,'distance',avoid);
+          const easiest=dijkstra(s.i,t.i,'time',avoid);
+          const same=shortest && easiest && JSON.stringify(shortest.coords)===JSON.stringify(easiest.coords);
+          const features=[];
+          if(shortest)features.push({type:'Feature',properties:{kind:'short'},geometry:{type:'LineString',coordinates:shortest.coords}});
+          if(easiest && !same)features.push({type:'Feature',properties:{kind:'easy'},geometry:{type:'LineString',coordinates:easiest.coords}});
+          updateLayers(features);
+          card.classList.add('visible');card.innerHTML=routeHTML(shortest,easiest,s,t);
+          if(!shortest&&!easiest){routeButton.textContent='현재 선택 지점은 연결되지 않습니다';routeButton.disabled=true;return;}
+          routeButton.disabled=false;shown=true;routeButton.textContent='계산 경로 숨기기';
+          lineIds.forEach(id=>map.setLayoutProperty(id,'visibility','visible'));
+          const bounds=new maplibregl.LngLatBounds();(shortest||easiest).coords.forEach(p=>bounds.extend(p));
+          map.fitBounds(bounds,{padding:{top:155,bottom:90,left:Math.min(400,innerWidth*.33),right:55},maxZoom:16,duration:600});
+        }catch(err){card.textContent='계산 오류: '+err.message;card.classList.add('visible');console.error(err)}
+      }
+      function setPick(mode){pickMode=mode;document.getElementById('pick-start').classList.toggle('picking',mode==='start');document.getElementById('pick-end').classList.toggle('picking',mode==='end');setState(mode?`지도에서 ${mode==='start'?'출발':'도착'} 위치를 클릭해 주세요 (보행망에 가장 가까운 노드 연결)`:'계산 준비 완료')}
+      document.getElementById('pick-start').onclick=()=>setPick('start');
+      document.getElementById('pick-end').onclick=()=>setPick('end');
+      document.getElementById('reset-points').onclick=()=>{selectedStart=start.slice();selectedEnd=end.slice();startLabel.textContent='새장골경로당';endLabel.textContent='연서시장';setPick(null);updatePointMarkers();recompute()};
+      stairsBox.onchange=()=>recompute();
+      routeButton.onclick=()=>{shown=!shown;lineIds.forEach(id=>map.setLayoutProperty(id,'visibility',shown?'visible':'none'));routeButton.textContent=shown?'계산 경로 숨기기':'계산 경로 표시'};
+      map.on('click',e=>{if(!pickMode||!graph)return;const p=[e.lngLat.lng,e.lngLat.lat],snap=nearestNode(p);
+        if(snap.d>90){setState(`이 지역 도로망에서 ${Math.round(snap.d)}m 떨어져 있습니다. 가까운 도로를 선택해 주세요`,true);return}
+        if(pickMode==='start'){selectedStart=p;startLabel.textContent='지도 선택 위치'}else{selectedEnd=p;endLabel.textContent='지도 선택 위치'}
+        setPick(null);updatePointMarkers();recompute();
+      });
+      async function loadGraph(){
+        try{
+          const res=await fetch(graphUrl.href,{cache:'no-cache'});if(!res.ok)throw new Error(`HTTP ${res.status}: public/data/walk_graph.json 확인`);
+          graph=await res.json();
+          if(graph.schema!=='teetertotter-walkgraph-v1'||!Array.isArray(graph.nodes)||!Array.isArray(graph.edges))throw new Error('지원하지 않는 도로망 형식');
+          adj=Array.from({length:graph.nodes.length},()=>[]);
+          graph.edges.forEach((e,i)=>{if(adj[e[0]])adj[e[0]].push(i)});
+          updatePointMarkers();recompute();
+          setState(`${graph.nodes.length.toLocaleString()}개 연결점 로딩 · 브라우저 경로 탐색 준비 완료`);
+        }catch(err){routeButton.textContent='도로망 데이터 불러오기 실패';routeButton.disabled=true;card.classList.add('visible');card.textContent='오류: '+err.message+' ('+graphUrl.pathname+')';setState('도로망 로드 실패: '+err.message,true);console.error(err)}
+      }
       map.on('load',()=>{
-        loadPilotRoute();
+        loadGraph();
         let extruded=false;
         const style=map.getStyle();
         const vectorSources=Object.entries(style.sources||{}).filter(([,s])=>s.type==='vector');
