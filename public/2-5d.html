@@ -40,6 +40,11 @@
     .route-view-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
     .route-view-options label{display:flex;align-items:center;justify-content:center;gap:3px;font-size:11px;background:white;border:1px solid #dfd6ed;border-radius:7px;padding:7px 2px;white-space:nowrap;cursor:pointer}
     .route-view-options input{margin:0;accent-color:#7545be}
+    .route-view-options label:has(input:checked){border-color:#9bb4cf;background:#eff6ff;font-weight:750}
+    .route-key{width:15px;height:0;border-top:4px solid;flex:0 0 15px;border-radius:2px}
+    .route-key-short{border-color:#1689ff}
+    .route-key-time{border-color:#e68a20;border-top-style:dashed}
+    .route-key-comfort{border-color:#8c4fd3;border-top-style:dotted}
     .route-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
     .route-metric{padding:7px 5px;font-size:10px}.route-metric b{font-size:14px}
     .comfort-disclaimer{margin-top:8px;font-size:10px;color:#766085;line-height:1.5}
@@ -105,7 +110,7 @@
   <header><div><h1>같은 거리, 다른 걸음 </h1><small>경사를 고려한 내 걸음에 맞는 길찾기</small></div><a class="return" href="./">메인으로</a></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
     <section class="panel is-collapsed" id="route-panel">
-      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
+      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9.1</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
       <div id="panel-content">
       <div class="modes"><button id="flat">2D 평면</button><button id="tilt" class="active">2.5D 입체</button></div>
       <div class="row"><span class="dot start"></span>출발 <span id="start-label">새장골경로당</span> <span style="color:#98a8b7">→</span> 도착 <span id="end-label">연서시장</span></div>
@@ -125,13 +130,13 @@
       <div class="route-view" role="group" aria-label="지도에 표시할 경로">
         <span class="route-view-label">지도에 표시할 경로</span>
         <div class="route-view-options">
-          <label><input type="radio" name="route-mode" value="distance"> 최단거리</label>
-          <label><input type="radio" name="route-mode" value="time"> 토블러</label>
-          <label><input type="radio" name="route-mode" value="comfort" checked> 경사 부담↓</label>
+          <label><input type="checkbox" name="route-mode" value="distance" checked> <span class="route-key route-key-short"></span>최단거리</label>
+          <label><input type="checkbox" name="route-mode" value="time" checked> <span class="route-key route-key-time"></span>토블러</label>
+          <label><input type="checkbox" name="route-mode" value="comfort" checked> <span class="route-key route-key-comfort"></span>경사 부담↓</label>
         </div>
       </div>
       <button class="route-btn" id="show-route" disabled>보행 도로망 불러오는 중…</button>
-      <label class="check" style="margin-top:9px;font-size:12px"><input type="checkbox" id="show-slopes" disabled> <b>오르막·내리막 색상 표시</b> <small style="color:#70859b">(선택한 경로 기준)</small></label>
+      <label class="check" style="margin-top:9px;font-size:12px"><input type="checkbox" id="show-slopes" disabled> <b>오르막·내리막 색상 표시</b> <small id="slopes-caption" style="color:#70859b">(경로 1개 선택 시)</small></label>
       <div class="slope-legend" id="slope-legend"><div class="slope-key"><i class="swatch" style="background:#d96d30"></i><span>오르막 ▲</span><i class="swatch" style="background:#279b7c"></i><span>내리막 ▼</span><i class="swatch" style="background:#8797a7"></i><span>완만한 길 —</span><i class="swatch" style="background:#a7a4a0"></i><span>경사 미확인 ?</span></div><div class="slope-tip">현재 이동 방향 기준 · ±3% 분류 · 시험용 10m DEM에서 직접 보간한 경사입니다. 현장 검증 전입니다.</div></div>
       <div id="route-card" class="route-card" aria-live="polite"></div><div id="segment-info" class="route-card" aria-live="polite" style="display:none"></div><p class="hint">지도에 표시된 경로의 도로 구간을 클릭하면 해당 구간의 DEM 고도·경사·토블러 시간을 볼 수 있습니다.</p>
       <div class="state" id="state" role="status" aria-live="polite"></div>
@@ -330,9 +335,10 @@
       if(!window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true);
       for(const input of [startInput,endInput])input.addEventListener('focus',()=>{if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true)});
       
-      let activeMode='comfort';
       let routeCandidates={distance:null,time:null,comfort:null};
       const routeModeInputs=[...document.querySelectorAll('input[name="route-mode"]')];
+      const selectedModes=()=>routeModeInputs.filter(input=>input.checked).map(input=>input.value);
+      const firstSelectedRoute=()=>selectedModes().map(k=>routeCandidates[k]).find(Boolean)||null;
       const graphUrl=new URL('./data/walk_graph.json',location.href);
       function haversineApprox(a,b){return Math.hypot((a[0]-b[0])*88000,(a[1]-b[1])*111200)}
       function nearestNode(pos){
@@ -422,11 +428,31 @@
         }
       }
       function setLayerVisibility(){
-        const showColored=shown && slopesBox.checked;
-        const modeIdx={distance:0,time:1,comfort:2}[activeMode];
-        for(const [index,id] of lineIds.entries())if(map.getLayer(id))map.setLayoutProperty(id,'visibility',shown&&!showColored&&index===modeIdx?'visible':'none');
+        const modes=selectedModes();
+        const soleRoute=modes.length===1?routeCandidates[modes[0]]:null;
+        // A slope overlay can only describe one route. With multiple routes, show route colors.
+        slopesBox.disabled=!soleRoute;
+        if(!soleRoute)slopesBox.checked=false;
+        document.getElementById('slopes-caption').textContent=modes.length===1?'(선택한 경로 기준)':'(경로 1개 선택 시)';
+        const showColored=shown && slopesBox.checked && !!soleRoute;
+        const kinds=['distance','time','comfort'];
+        for(const [index,id] of lineIds.entries())if(map.getLayer(id)){
+          const visible=shown&&!showColored&&modes.includes(kinds[index])&&!!routeCandidates[kinds[index]];
+          map.setLayoutProperty(id,'visibility',visible?'visible':'none');
+          // Parallel offsets keep overlapping routes legible; a single route stays centered.
+          const offset=modes.length===1?0:[-3.5,0,3.5][index];
+          map.setPaintProperty(id,'line-offset',offset);
+          map.setPaintProperty(id,'line-opacity',modes.length===1?.95:.88);
+        }
         if(map.getLayer(slopeLayerId))map.setLayoutProperty(slopeLayerId,'visibility',showColored?'visible':'none');
         slopeLegend.classList.toggle('visible',showColored);
+      }
+      function refreshRouteSelection(){
+        const selected=firstSelectedRoute();
+        lastEasiest=selected;
+        const slopeData=slopeFeatures(selected);
+        updateSlopeLayer(slopeData.features);
+        setLayerVisibility();
       }
       function slopeSummary(stats){
         if(!stats)return '';
@@ -450,9 +476,9 @@
         const geojson={type:'FeatureCollection',features};
         if(source)source.setData(geojson);else{
           map.addSource(sourceId,{type:'geojson',data:geojson});
-          map.addLayer({id:lineIds[0],type:'line',source:sourceId,filter:['==',['get','kind'],'short'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1689ff','line-width':7,'line-opacity':0.92}});
-          map.addLayer({id:lineIds[1],type:'line',source:sourceId,filter:['==',['get','kind'],'easy'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#e68a20','line-width':6}});
-          map.addLayer({id:lineIds[2],type:'line',source:sourceId,filter:['==',['get','kind'],'comfort'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#8c4fd3','line-width':7}});
+          map.addLayer({id:lineIds[0],type:'line',source:sourceId,filter:['==',['get','kind'],'short'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1689ff','line-width':6,'line-opacity':0.92}});
+          map.addLayer({id:lineIds[1],type:'line',source:sourceId,filter:['==',['get','kind'],'easy'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#e68a20','line-width':5,'line-dasharray':[2.5,1.5]}});
+          map.addLayer({id:lineIds[2],type:'line',source:sourceId,filter:['==',['get','kind'],'comfort'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#8c4fd3','line-width':6,'line-dasharray':[.5,1.7]}});
         }
       }
       const pointMarkers=[];
@@ -478,14 +504,12 @@
           if(easiest)features.push({type:'Feature',properties:{kind:'easy'},geometry:{type:'LineString',coordinates:easiest.coords}});
           if(comfort)features.push({type:'Feature',properties:{kind:'comfort'},geometry:{type:'LineString',coordinates:comfort.coords}});
           updateLayers(features);
-          const active=routeCandidates[activeMode]||comfort||easiest||shortest;
-          lastEasiest=active;
+          const active=firstSelectedRoute()||comfort||easiest||shortest;
           const slopeData=slopeFeatures(active);
-          updateSlopeLayer(slopeData.features);document.getElementById('segment-info').style.display='none';
+          document.getElementById('segment-info').style.display='none';
           card.classList.add('visible');card.innerHTML=routeHTML(shortest,easiest,comfort,s,t,slopeData.stats);
-          slopesBox.disabled=!active;
           shown=true;
-          setLayerVisibility();
+          refreshRouteSelection();
           if(!shortest&&!easiest&&!comfort){shown=false;setLayerVisibility();routeButton.textContent='현재 선택 지점은 연결되지 않습니다';routeButton.disabled=true;return;}
           routeButton.disabled=false;shown=true;routeButton.textContent='계산 경로 숨기기';
           setLayerVisibility();
@@ -497,7 +521,7 @@
       document.getElementById('pick-start').onclick=()=>setPick('start');
       document.getElementById('pick-end').onclick=()=>setPick('end');
       document.getElementById('reset-points').onclick=()=>{selectedStart=start.slice();selectedEnd=end.slice();startLabel.textContent='새장골경로당';endLabel.textContent='연서시장';startInput.value='새장골경로당';endInput.value='연서시장';++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);setPick(null);updatePointMarkers();recompute()};
-      for(const item of routeModeInputs)item.addEventListener('change',()=>{if(!item.checked)return;activeMode=item.value;recompute()});
+      for(const item of routeModeInputs)item.addEventListener('change',refreshRouteSelection);
       stairsBox.onchange=()=>recompute();
       slopesBox.onchange=()=>setLayerVisibility();
       routeButton.onclick=()=>{shown=!shown;setLayerVisibility();routeButton.textContent=shown?'계산 경로 숨기기':'계산 경로 표시'};
