@@ -1,0 +1,15 @@
+{
+  "schema": "teetertotter-regions-v1",
+  "regions": [
+    {
+      "id": "seoul-eunpyeong-bulgwang2-pilot",
+      "display_name": "불광2동 시험 구역",
+      "graph_url": "./walk_graph.json",
+      "graph_schema_revision": "v1.1-elevation-fields",
+      "elevation_source": "서울시 등고선·표고점 기반 시험용 10m DEM",
+      "verification_status": "unverified-pilot",
+      "inter_region_routing": false
+    }
+  ],
+  "notes": "서울시 확장용 등록부의 첫 버전이며, 이 파일만으로 서울시 라우팅이 활성화되지는 않습니다."
+}
