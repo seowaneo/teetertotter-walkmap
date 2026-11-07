@@ -198,13 +198,50 @@
       .maplibregl-ctrl-bottom-right{bottom:235px!important}
       .mobile-route-sheet.expanded~.view-toggle{bottom:235px!important}
     }
+
+    /* v0.9.5 compact phone navigation: map first, no overlapping full-height cards */
+    .mobile-mode-tabs{display:none}
+    @media(max-width:650px){
+      .panel,.panel.is-collapsed{top:calc(8px + env(safe-area-inset-top));left:10px;right:10px;width:auto!important;max-width:none!important;padding:5px 7px!important;min-height:56px;max-height:none;overflow:visible;z-index:12;border-radius:17px;box-shadow:0 2px 12px #1125391c}
+      .search-wrap{overflow:visible}
+      .location-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;padding:0 30px 0 0;align-items:stretch}
+      .location-field,.location-field.origin,.location-field.destination{min-width:0;min-height:53px;padding:6px 8px;margin:0;border:0;border-radius:0;display:flex;align-items:center;gap:6px}
+      .location-field.origin{border-right:1px solid #e4e9ed}
+      .location-field .location-pin{width:14px;height:18px;flex:0 0 14px}
+      .location-field .location-pin svg{width:15px;height:18px}
+      .location-field label,.location-address,.location-connector{display:none!important}
+      .search-wrap .location-field input[type=text]{font-size:12px!important;font-weight:700;line-height:1.3;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .swap-points{right:0;top:50%;height:33px;width:28px;border:0!important;box-shadow:none!important;background:#fff!important;border-radius:8px!important;font-size:16px!important}
+      .search-results.visible{position:absolute;top:calc(100% + 5px);left:0;right:0;max-height:min(33dvh,260px);padding:8px;background:#fff;border:1px solid #dbe3e7;border-radius:15px;box-shadow:0 8px 18px #10263b22;z-index:20}
+      .search-message:not(:empty){position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;padding:9px;border-radius:10px;box-shadow:0 5px 15px #10263b22}
+      .mobile-mode-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));position:absolute;z-index:9;top:calc(73px + env(safe-area-inset-top));left:10px;right:10px;gap:6px}
+      .mobile-mode-tabs button{min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 3px 7px;background:rgba(255,255,255,.96);color:#25394a;border:1px solid #e4e8ec;border-radius:13px;box-shadow:0 2px 10px #10263b14;font-size:11px;line-height:1.3}
+      .mobile-mode-tabs button b{font-size:16px;font-weight:800}
+      .mobile-mode-tabs button[aria-pressed=true]{background:#12865b!important;border-color:#12865b!important;color:#fff!important}
+      .mobile-mode-tabs button:disabled{opacity:.5}
+      .mobile-route-sheet{z-index:10;max-height:min(72dvh,660px);padding:7px 12px calc(9px + env(safe-area-inset-bottom));border-radius:20px 20px 0 0;overflow-y:auto;box-shadow:0 -4px 19px #11253925}
+      .mobile-route-sheet .sheet-handle{margin-bottom:5px;height:4px}
+      .mobile-route-sheet .sheet-head{margin-bottom:6px}
+      .mobile-route-sheet .sheet-head strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .mobile-route-sheet .sheet-head button{font-size:11px;padding:6px 9px}
+      .mobile-route-cards{display:none!important}
+      .mobile-actions{margin-top:0;gap:7px}
+      .mobile-actions button{padding:8px 2px;font-size:11px}
+      .mobile-route-sheet.expanded{height:auto;max-height:min(72dvh,660px);overflow-y:auto}
+      .mobile-route-sheet.expanded .mobile-detail{display:block;overflow:visible;margin-top:11px}
+      .mobile-route-sheet.prefs-open .mobile-prefs{display:block}
+      .mobile-route-sheet.prefs-open .mobile-detail{display:none!important}
+      .mobile-route-sheet.prefs-open{max-height:min(72dvh,660px)}
+      .view-toggle{bottom:135px!important;right:12px!important;width:42px;height:42px}
+      .maplibregl-ctrl-bottom-right{bottom:145px!important}
+    }
   </style>
 </head>
 <body>
   <header><div><h1>같은 거리, 다른 걸음 </h1><small>경사를 고려한 내 걸음에 맞는 길찾기</small></div></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
     <section class="panel is-collapsed" id="route-panel">
-      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9.4</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
+      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9.5</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
       <div id="panel-content">
       <div class="search-wrap" id="search-wrap">
         <div class="location-fields">
@@ -230,16 +267,21 @@
       </div>
     </section>
 
+    <nav class="mobile-mode-tabs" id="mobile-mode-tabs" aria-label="경로별 길찾기 결과">
+      <button type="button" data-mode="distance" aria-pressed="false"><span>최단거리</span><b>—</b></button>
+      <button type="button" data-mode="time" aria-pressed="false"><span>토블러</span><b>—</b></button>
+      <button type="button" data-mode="comfort" aria-pressed="true"><span>경사 부담</span><b>—</b></button>
+    </nav>
     <section class="mobile-route-sheet" id="mobile-route-sheet" aria-label="모바일 경로 비교">
       <div class="sheet-handle" aria-hidden="true"></div>
-      <div class="sheet-head"><strong>길찾기 결과</strong><button type="button" id="mobile-expand" aria-expanded="false">상세 보기 ▴</button></div>
-      <div id="mobile-route-cards" class="mobile-route-cards" aria-live="polite"><div class="mobile-status">경로를 계산하고 있습니다…</div></div>
+      <div class="sheet-head"><strong id="mobile-route-summary">경로를 선택해 주세요</strong><button type="button" id="mobile-expand" aria-expanded="false">상세 보기 ▴</button></div>
+      <div id="mobile-route-cards" class="mobile-route-cards" aria-live="polite"></div>
       <div class="mobile-actions"><button type="button" id="mobile-my-location">◎ 내 위치</button><button type="button" id="mobile-slope-toggle">경사 색상 켜기</button><button type="button" id="mobile-prefs-toggle">길 취향 ⚙</button></div>
       <div class="mobile-prefs" id="mobile-prefs">
         <div class="pref-row"><strong>오르막 부담</strong><div class="pref-options" id="pref-up"><button data-level="low">괜찮아요</button><button data-level="medium" class="active">보통</button><button data-level="high">피하고 싶어요</button></div></div>
         <div class="pref-row"><strong>내리막 부담</strong><div class="pref-options" id="pref-down"><button data-level="low">괜찮아요</button><button data-level="medium" class="active">보통</button><button data-level="high">피하고 싶어요</button></div></div>
         <label class="pref-check"><input type="checkbox" id="mobile-avoid-stairs"> OSM에 표시된 계단 제외</label>
-        <p class="pref-note">선호 설정은 경사 부담 경로의 가중치에만 반영됩니다. 실제 안전성이나 이동시간을 보증하지 않으며, 계단·고도 정보는 현장 검증 전입니다.</p>
+        <p class="pref-note">선호도는 경사 부담 경로 계산에만 적용됩니다. 실제 보행 안전성은 검증 전입니다.</p>
       </div>
       <div class="mobile-detail" id="mobile-detail"><h3>경로 고도 변화</h3><div class="mobile-profile" id="mobile-profile"></div><div class="mobile-detail-metrics" id="mobile-detail-metrics"></div><p class="mobile-status">10m 보간 DEM에서 추정한 고도입니다. 실제 도로 경사는 다를 수 있습니다.</p></div>
     </section>
@@ -645,19 +687,39 @@
         }
         const mode=routeCandidates[detailMode]?detailMode:slopeRouteKind()||modePriority.find(m=>routeCandidates[m]);
         routeProfile(routeCandidates[mode]);
+        const mobileSummary=document.getElementById('mobile-route-summary');
+        const focusRoute=routeCandidates[detailMode] || routeCandidates[mode];
+        mobileSummary.textContent=focusRoute ? `${modeNames[detailMode]} · ${Math.round(focusRoute.meters).toLocaleString('ko-KR')}m` : '선택한 경로 없음';
+        document.querySelectorAll('#mobile-mode-tabs button').forEach(tab=>{
+          const kind=tab.dataset.mode, r=routeCandidates[kind];
+          tab.disabled=!r;
+          tab.querySelector('b').textContent=r && r.missing===0 ? `${Math.round(r.minutes)}분` : '—';
+          tab.setAttribute('aria-pressed',String(kind===detailMode));
+        });
         mobileSlope.textContent=slopesBox.checked?'경사 색상 끄기':'경사 색상 켜기';
       }
+      document.querySelectorAll('#mobile-mode-tabs button').forEach(tab=>tab.addEventListener('click',()=>{
+        const kind=tab.dataset.mode;if(!routeCandidates[kind])return;
+        detailMode=kind;
+        // One emphasized path on phone; equivalent paths remain linked in desktop grouping.
+        chosenModes=new Set([kind]);
+        refreshRouteSelection();
+      }));
       mobileExpand.addEventListener('click',()=>{
+        mobilePrefs.classList.remove('open');mobileSheet.classList.remove('prefs-open');
         const expanded=mobileSheet.classList.toggle('expanded');
         mobileExpand.textContent=expanded?'상세 닫기 ▾':'상세 보기 ▴';mobileExpand.setAttribute('aria-expanded',String(expanded));
         map.resize();
       });
       document.getElementById('mobile-prefs-toggle').addEventListener('click',()=>{
-        mobilePrefs.classList.toggle('open');
+        const open=mobilePrefs.classList.toggle('open');
+        mobileSheet.classList.toggle('prefs-open',open);
+        if(open){mobileSheet.classList.remove('expanded');mobileExpand.textContent='상세 보기 ▴';mobileExpand.setAttribute('aria-expanded','false')}
+        map.resize();
       });
       document.getElementById('mobile-my-location').addEventListener('click',()=>{
         const btn=document.getElementById('mobile-my-location');
-        const fail=message=>{btn.disabled=false;btn.textContent='◎ 내 위치';searchMsg(message,true)};
+        const fail=message=>{btn.disabled=false;btn.textContent='◎ 내 위치';document.getElementById('mobile-route-summary').textContent=message};
         if(!graph){fail('도로망을 불러오는 중입니다.');return}
         if(!navigator.geolocation){fail('이 기기에서 현재 위치 기능을 지원하지 않습니다.');return}
         btn.disabled=true;btn.textContent='위치 확인 중…';
@@ -750,7 +812,7 @@
           routeButton.disabled=false;shown=true;
           setLayerVisibility();
           const bounds=new maplibregl.LngLatBounds();active.coords.forEach(p=>bounds.extend(p));
-          map.fitBounds(bounds,{padding:window.matchMedia('(max-width:650px)').matches?{top:195,bottom:230,left:30,right:30}:{top:155,bottom:90,left:Math.min(400,innerWidth*.33),right:55},maxZoom:16,duration:600});
+          map.fitBounds(bounds,{padding:window.matchMedia('(max-width:650px)').matches?{top:155,bottom:145,left:25,right:25}:{top:155,bottom:90,left:Math.min(400,innerWidth*.33),right:55},maxZoom:16,duration:600});
         }catch(err){card.textContent='계산 오류: '+err.message;card.classList.add('visible');console.error(err)}
       }
       function setPick(mode){
