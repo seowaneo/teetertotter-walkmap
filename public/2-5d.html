@@ -106,7 +106,7 @@
       .maplibregl-ctrl-bottom-right{bottom:85px}
     }
 
-    /* v0.9.3 · place cards, grouped route choices and floating view button */
+    /* v0.9.4 · place cards, grouped route choices and floating view button */
     .return,.modes,.row,.route-select,.notice,.test-label,.search-hint,.comfort-disclaimer,.route-compare-note,.route-warning:empty{display:none!important}
     .search-wrap{border:0;background:transparent;padding:0;margin-top:0}
     .location-fields{padding-right:0}
@@ -134,13 +134,77 @@
     .view-toggle span{font-size:10px;font-weight:800;margin-top:4px}
     .panel{max-width:360px}
     @media(max-width:650px){.panel{max-height:min(55dvh,490px)}.view-toggle{bottom:200px;right:12px;width:48px;height:48px}.location-field{min-height:75px;padding:10px 13px}.route-view-options label{font-size:10px}.location-connector{height:16px}}
+
+    /* v0.9.4 · mobile map-first navigation */
+    .mobile-route-sheet{display:none}
+    @media(max-width:650px){
+      html,body{overflow:hidden}
+      header{display:none!important}
+      .main{height:100dvh!important}
+      .panel,.panel.is-collapsed{position:absolute;top:calc(10px + env(safe-area-inset-top));bottom:auto;left:10px;right:10px;width:auto;max-width:none;max-height:none;overflow:visible;padding:9px 10px 10px;background:rgba(255,255,255,.98);border-radius:17px;box-shadow:0 4px 24px #0b263d22}
+      .panel.is-collapsed #panel-content{display:block!important}
+      .panel-top,#panel-toggle,.eyebrow{display:none!important}
+      #panel-content{display:block!important;padding:0}
+      .search-wrap{margin:0;padding:0;border:0;background:transparent}
+      .location-fields{padding-right:38px}
+      .location-field{min-height:61px;padding:8px 10px;margin:0;border:0;border-radius:11px}
+      .location-connector{height:0!important;margin-left:17px!important}
+      .location-field.destination{border-top:1px solid #edf0f4;border-radius:0 0 11px 11px}
+      .location-field.origin{border-radius:11px 11px 0 0}
+      .location-field .location-pin svg{height:23px;width:22px}
+      .location-field input[type=text]{font-size:15px;font-weight:750;padding:1px 0}
+      .location-field label{font-size:10px}
+      .location-address{font-size:10px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
+      .swap-points{width:32px;top:50%;background:#eff4f5!important;color:#174c64!important}
+      .search-results.visible{max-height:33dvh;overflow:auto;margin:5px 0 0;border-top:1px solid #edf0f4}
+      .search-message:not(:empty){padding:6px 3px;font-size:11px}
+      .panel .route-options-extra,.panel .route-view,.panel #route-card,.panel #segment-info,.panel label:has(#show-slopes),.panel #slope-legend,.panel #state,.panel #show-route{display:none!important}
+      .mobile-route-sheet{display:flex;position:absolute;z-index:5;bottom:0;left:0;right:0;flex-direction:column;background:#fff;border-radius:23px 23px 0 0;box-shadow:0 -7px 25px #0b263d20;padding:9px 15px calc(12px + env(safe-area-inset-bottom));max-height:80dvh;overflow:auto;overscroll-behavior:contain}
+      .mobile-route-sheet .sheet-handle{width:42px;height:5px;border-radius:10px;background:#d6dde4;align-self:center;margin-bottom:5px}
+      .sheet-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+      .sheet-head strong{font-size:14px;letter-spacing:-.025em}
+      .sheet-head button{font-size:11px;padding:7px 10px}
+      .mobile-route-cards{display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 1px 5px}
+      .mobile-route-choice{flex:0 0 66%;min-width:205px;text-align:left;scroll-snap-align:start;border:2px solid #e6ebf0;border-radius:14px;padding:12px;background:#fafbfc;color:#152c3b}
+      .mobile-route-choice.selected{border-color:var(--route-color);background:#fff}
+      .mobile-route-choice .choice-title{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;line-height:1.3}
+      .mobile-route-choice .choice-check{margin-left:auto;font-size:17px;color:var(--route-color)}
+      .mobile-route-choice .choice-metrics{font-size:10px;color:#647786;margin-top:5px}
+      .mobile-route-choice .choice-time{font-size:23px;font-weight:850;color:#12283e}
+      .mobile-route-choice .choice-time small{font-size:13px;margin-left:1px}
+      .mobile-route-sheet .mobile-status{font-size:11px;color:#6a7882;margin:4px 0 0}
+      .mobile-route-sheet .mobile-detail{display:none;margin-top:12px;border-top:1px solid #eef0f3;padding-top:12px}
+      .mobile-route-sheet.expanded .mobile-detail{display:block}
+      .mobile-detail h3{font-size:13px;margin:8px 0}
+      .mobile-profile{border-radius:12px;background:#f5f7f8;padding:12px}
+      .mobile-profile svg{width:100%;height:98px;overflow:visible}
+      .mobile-profile-foot{display:flex;justify-content:space-between;color:#71818b;font-size:10px}
+      .mobile-detail-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}
+      .mobile-detail-metrics div{padding:9px 4px;border-radius:10px;background:#f5f7f8;text-align:center;font-size:10px}
+      .mobile-detail-metrics b{display:block;font-size:13px;margin-top:3px}
+      .mobile-prefs{display:none;margin-top:12px;border-top:1px solid #e6edf0;padding-top:12px}
+      .mobile-prefs.open{display:block}
+      .pref-row{margin:10px 0}
+      .pref-row strong{font-size:12px;display:block;margin-bottom:6px}
+      .pref-options{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+      .pref-options button{background:#f1f4f4;border-color:#f1f4f4;font-size:11px;padding:9px 2px}
+      .pref-options button.active{background:#dff4e8;color:#087447;border-color:#b9e5cd}
+      .mobile-prefs .pref-check{display:flex;align-items:center;gap:9px;font-size:12px;margin-top:13px}
+      .mobile-prefs .pref-note{font-size:10px;color:#607685;line-height:1.5;margin:10px 0 0}
+      .mobile-actions{display:flex;gap:8px;margin-top:9px}
+      .mobile-actions button{flex:1;background:#f2f5f5;border:0;padding:10px;font-size:12px}
+      .mobile-actions button.primary{background:#119966;color:#fff}
+      .view-toggle{bottom:225px!important;right:13px!important;z-index:4}
+      .maplibregl-ctrl-bottom-right{bottom:235px!important}
+      .mobile-route-sheet.expanded~.view-toggle{bottom:235px!important}
+    }
   </style>
 </head>
 <body>
   <header><div><h1>같은 거리, 다른 걸음 </h1><small>경사를 고려한 내 걸음에 맞는 길찾기</small></div></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
     <section class="panel is-collapsed" id="route-panel">
-      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9.3</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
+      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9.4</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
       <div id="panel-content">
       <div class="search-wrap" id="search-wrap">
         <div class="location-fields">
@@ -164,6 +228,20 @@
       <div class="state" id="state" role="status" aria-live="polite"></div>
       <div class="test-label">시험용 경로 · 현장 검증 전</div>
       </div>
+    </section>
+
+    <section class="mobile-route-sheet" id="mobile-route-sheet" aria-label="모바일 경로 비교">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-head"><strong>길찾기 결과</strong><button type="button" id="mobile-expand" aria-expanded="false">상세 보기 ▴</button></div>
+      <div id="mobile-route-cards" class="mobile-route-cards" aria-live="polite"><div class="mobile-status">경로를 계산하고 있습니다…</div></div>
+      <div class="mobile-actions"><button type="button" id="mobile-my-location">◎ 내 위치</button><button type="button" id="mobile-slope-toggle">경사 색상 켜기</button><button type="button" id="mobile-prefs-toggle">길 취향 ⚙</button></div>
+      <div class="mobile-prefs" id="mobile-prefs">
+        <div class="pref-row"><strong>오르막 부담</strong><div class="pref-options" id="pref-up"><button data-level="low">괜찮아요</button><button data-level="medium" class="active">보통</button><button data-level="high">피하고 싶어요</button></div></div>
+        <div class="pref-row"><strong>내리막 부담</strong><div class="pref-options" id="pref-down"><button data-level="low">괜찮아요</button><button data-level="medium" class="active">보통</button><button data-level="high">피하고 싶어요</button></div></div>
+        <label class="pref-check"><input type="checkbox" id="mobile-avoid-stairs"> OSM에 표시된 계단 제외</label>
+        <p class="pref-note">선호 설정은 경사 부담 경로의 가중치에만 반영됩니다. 실제 안전성이나 이동시간을 보증하지 않으며, 계단·고도 정보는 현장 검증 전입니다.</p>
+      </div>
+      <div class="mobile-detail" id="mobile-detail"><h3>경로 고도 변화</h3><div class="mobile-profile" id="mobile-profile"></div><div class="mobile-detail-metrics" id="mobile-detail-metrics"></div><p class="mobile-status">10m 보간 DEM에서 추정한 고도입니다. 실제 도로 경사는 다를 수 있습니다.</p></div>
     </section>
     <button type="button" id="view-toggle" class="view-toggle" aria-label="2D 평면 보기로 전환" title="2D 평면 보기로 전환">▱<span>2D</span></button>
   </div>
@@ -256,7 +334,7 @@
             setPick(null);updatePointMarkers();recompute();
             ++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);
             (searchTarget==='start'?startInput:endInput).value=item.name;
-            if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(false);
+            if(!window.matchMedia('(max-width: 650px)').matches)setPanelOpen(false);
             searchMsg('');
           });
           searchResults.appendChild(b);
@@ -354,8 +432,8 @@
       const panelToggle=document.getElementById('panel-toggle');
       function setPanelOpen(open){panel.classList.toggle('is-collapsed',!open);panelToggle.setAttribute('aria-expanded',String(open));panelToggle.textContent=open?'접기 ▾':'검색 · 길찾기 열기 ▴';setTimeout(()=>map.resize(),150)}
       panelToggle.addEventListener('click',()=>setPanelOpen(panel.classList.contains('is-collapsed')));
-      if(!window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true);
-      for(const input of [startInput,endInput])input.addEventListener('focus',()=>{if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true)});
+      setPanelOpen(true);
+      for(const input of [startInput,endInput])input.addEventListener('focus',()=>{setPanelOpen(true)});
       
       let routeCandidates={distance:null,time:null,comfort:null};
       const modeOrder=['distance','time','comfort'];
@@ -416,12 +494,13 @@
       // v0.9 experimental comfort preference (NOT calibrated for elderly users).
       // Use directed DEM grade. Stronger penalty for steep descent as well as ascent.
       // Keeps all costs nonnegative; slope/quality flags remain visibly unverified.
+      const comfortPrefs={up:5,down:8};
       function comfortCost(edge){
         const base=edge[3],grade=edge[7];
         if(!Number.isFinite(base)||!Number.isFinite(grade))return null;
         const uphill=Math.max(0,grade-0.04);
         const downhill=Math.max(0,-grade-0.06);
-        return base*(1+5*uphill+8*downhill);
+        return base*(1+comfortPrefs.up*uphill+comfortPrefs.down*downhill);
       }
       function dijkstra(from,to,weight,avoidSteps){
         const n=graph.nodes.length,dist=new Float64Array(n);dist.fill(Infinity);
@@ -511,12 +590,105 @@
         }
         slopeLegend.classList.toggle('visible',showColored);
       }
+
+      // v0.9.4 mobile bottom sheet: data-driven comparison, preference weighting and elevation profile.
+      const mobileSheet=document.getElementById('mobile-route-sheet');
+      const mobileCards=document.getElementById('mobile-route-cards');
+      const mobileProfile=document.getElementById('mobile-profile');
+      const mobileMetrics=document.getElementById('mobile-detail-metrics');
+      const mobileExpand=document.getElementById('mobile-expand');
+      const mobilePrefs=document.getElementById('mobile-prefs');
+      const mobileSlope=document.getElementById('mobile-slope-toggle');
+      let detailMode='comfort';
+      const escapeText=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      function routeProfile(route){
+        if(!route||!route.edgeIds?.length){mobileProfile.textContent='표시할 고도 자료가 없습니다.';return}
+        const samples=[];let x=0,ascent=0,descent=0,maxGrade=0,missing=0;
+        const first=graph.edges[route.edgeIds[0]];
+        if(Number.isFinite(first[5]))samples.push([0,first[5]]);
+        for(const id of route.edgeIds){const e=graph.edges[id];x+=e[2];
+          if(Number.isFinite(e[6]))samples.push([x,e[6]]);else missing++;
+          if(Number.isFinite(e[7])){const delta=e[7]*e[2];if(delta>0)ascent+=delta;else descent-=delta;maxGrade=Math.max(maxGrade,Math.abs(e[7]))}
+        }
+        if(samples.length<2||!(x>0)){mobileProfile.textContent='고도 그래프 자료가 충분하지 않습니다.';return}
+        const heights=samples.map(p=>p[1]);let low=Math.min(...heights),high=Math.max(...heights);if(high-low<4){low-=2;high+=2}else{low-=2;high+=2}
+        const pt=([dist,z])=>`${(8+(dist/x)*284).toFixed(1)},${(81-(z-low)/(high-low)*68).toFixed(1)}`;
+        const path=samples.map(pt).join(' '),start=pt(samples[0]),end=pt(samples[samples.length-1]);
+        mobileProfile.innerHTML=`<svg viewBox="0 0 300 90" role="img" aria-label="출발점부터 도착점까지 추정 고도 변화"><line x1="8" y1="81" x2="292" y2="81" stroke="#cfd9de"/><polyline points="${path}" fill="none" stroke="#188a68" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${start.split(',')[0]}" cy="${start.split(',')[1]}" r="3" fill="#188a68"/><circle cx="${end.split(',')[0]}" cy="${end.split(',')[1]}" r="3" fill="#188a68"/></svg><div class="mobile-profile-foot"><span>출발</span><span>도착</span></div>`;
+        mobileMetrics.innerHTML=`<div>누적 오르막<b>${Math.round(ascent)}m</b></div><div>누적 내리막<b>${Math.round(descent)}m</b></div><div>최대 추정 경사<b>${(maxGrade*100).toFixed(1)}%</b></div>`;
+        if(missing)mobileMetrics.innerHTML+=`<div style="grid-column:1/-1">고도 누락 구간: ${missing}개</div>`;
+      }
+      function renderMobileRoutes(){
+        if(!graph)return;
+        mobileCards.replaceChildren();
+        const groups=routeGroups;
+        if(!groups.length){mobileCards.innerHTML='<p class="mobile-status">현재 선택한 지점 사이에 경로를 찾지 못했습니다.</p>';mobileProfile.textContent='';mobileMetrics.textContent='';return}
+        for(const g of groups){
+          const rep=modePriority.find(m=>g.includes(m));const route=routeCandidates[rep];if(!route)continue;
+          const checked=g.some(m=>chosenModes.has(m));
+          const btn=document.createElement('button');btn.type='button';btn.className='mobile-route-choice'+(checked?' selected':'');
+          btn.style.setProperty('--route-color',modeColors[rep]);btn.setAttribute('aria-pressed',String(checked));
+          const title=document.createElement('div');title.className='choice-title';
+          const dot=document.createElement('span');dot.style.cssText=`width:9px;height:9px;flex:none;background:${modeColors[rep]};border-radius:50%`;
+          const label=document.createElement('span');label.textContent=g.map(m=>modeNames[m]).join(' · ');
+          const check=document.createElement('span');check.className='choice-check';check.textContent=checked?'☑':'□';
+          title.append(dot,label,check);const metrics=document.createElement('div');metrics.className='choice-metrics';
+          const duration=route.missing===0?route.minutes.toFixed(1):'—';
+          metrics.innerHTML=`<span class="choice-time">${duration}<small>${route.missing===0?'분':'시간 미확인'}</small></span><div>${Math.round(route.meters).toLocaleString('ko-KR')}m · ${route.steps}개 표시된 계단 구간</div>`;
+          btn.append(title,metrics);
+          btn.addEventListener('click',()=>{
+            const next=!g.some(m=>chosenModes.has(m));
+            for(const m of g)next?chosenModes.add(m):chosenModes.delete(m);
+            detailMode=rep;buildRouteGroups();refreshRouteSelection();
+          });
+          mobileCards.appendChild(btn);
+        }
+        const mode=routeCandidates[detailMode]?detailMode:slopeRouteKind()||modePriority.find(m=>routeCandidates[m]);
+        routeProfile(routeCandidates[mode]);
+        mobileSlope.textContent=slopesBox.checked?'경사 색상 끄기':'경사 색상 켜기';
+      }
+      mobileExpand.addEventListener('click',()=>{
+        const expanded=mobileSheet.classList.toggle('expanded');
+        mobileExpand.textContent=expanded?'상세 닫기 ▾':'상세 보기 ▴';mobileExpand.setAttribute('aria-expanded',String(expanded));
+        map.resize();
+      });
+      document.getElementById('mobile-prefs-toggle').addEventListener('click',()=>{
+        mobilePrefs.classList.toggle('open');
+      });
+      document.getElementById('mobile-my-location').addEventListener('click',()=>{
+        const btn=document.getElementById('mobile-my-location');
+        const fail=message=>{btn.disabled=false;btn.textContent='◎ 내 위치';searchMsg(message,true)};
+        if(!graph){fail('도로망을 불러오는 중입니다.');return}
+        if(!navigator.geolocation){fail('이 기기에서 현재 위치 기능을 지원하지 않습니다.');return}
+        btn.disabled=true;btn.textContent='위치 확인 중…';
+        navigator.geolocation.getCurrentPosition(pos=>{
+          const p=[pos.coords.longitude,pos.coords.latitude];const snap=nearestNode(p);
+          if(snap.d>90){fail('현재 위치는 불광2동 길찾기 범위 밖입니다.');return}
+          selectedStart=p;startInput.value='현재 위치';startAddress.textContent='GPS에서 확인한 위치';
+          setSearchTarget('start');setPick(null);updatePointMarkers();recompute();
+          btn.disabled=false;btn.textContent='◎ 내 위치';searchMsg('');
+        },err=>fail(err.code===1?'위치 권한을 허용해 주세요.':'현재 위치를 확인하지 못했습니다.'),{enableHighAccuracy:true,timeout:12000,maximumAge:20000});
+      });
+      mobileSlope.addEventListener('click',()=>{
+        if(slopesBox.disabled)return;slopesBox.checked=!slopesBox.checked;setLayerVisibility();renderMobileRoutes();
+      });
+      const mobileAvoid=document.getElementById('mobile-avoid-stairs');
+      mobileAvoid.checked=stairsBox.checked;
+      mobileAvoid.addEventListener('change',()=>{stairsBox.checked=mobileAvoid.checked;recompute()});
+      stairsBox.addEventListener('change',()=>{mobileAvoid.checked=stairsBox.checked});
+      for(const [id,key,vals] of [['pref-up','up',{low:0,medium:5,high:12}],['pref-down','down',{low:0,medium:8,high:18}]]){
+        document.querySelectorAll('#'+id+' button').forEach(btn=>btn.addEventListener('click',()=>{
+          document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('active',b===btn));
+          comfortPrefs[key]=vals[btn.dataset.level];recompute();
+        }));
+      }
       function refreshRouteSelection(){
         const selected=firstSelectedRoute();
         lastEasiest=selected;
         const slopeData=slopeFeatures(selected);
         updateSlopeLayer(slopeData.features);
         setLayerVisibility();
+        renderMobileRoutes();
       }
       function slopeSummary(stats){
         if(!stats)return '';
@@ -578,7 +750,7 @@
           routeButton.disabled=false;shown=true;
           setLayerVisibility();
           const bounds=new maplibregl.LngLatBounds();active.coords.forEach(p=>bounds.extend(p));
-          map.fitBounds(bounds,{padding:{top:155,bottom:90,left:Math.min(400,innerWidth*.33),right:55},maxZoom:16,duration:600});
+          map.fitBounds(bounds,{padding:window.matchMedia('(max-width:650px)').matches?{top:195,bottom:230,left:30,right:30}:{top:155,bottom:90,left:Math.min(400,innerWidth*.33),right:55},maxZoom:16,duration:600});
         }catch(err){card.textContent='계산 오류: '+err.message;card.classList.add('visible');console.error(err)}
       }
       function setPick(mode){
@@ -602,7 +774,7 @@
         else{selectedEnd=p;endInput.value='지도에서 선택한 위치';endAddress.textContent=`위도 ${p[1].toFixed(5)} · 경도 ${p[0].toFixed(5)}`}
         ++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);searchMsg('');
         setPick(null);document.activeElement?.blur?.();updatePointMarkers();recompute();
-        if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(false);
+        if(!window.matchMedia('(max-width: 650px)').matches)setPanelOpen(false);
       });
       async function loadGraph(){
         try{
