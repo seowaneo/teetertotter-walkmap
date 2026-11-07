@@ -35,6 +35,14 @@
     @media(max-width:650px){header{height:67px;padding:10px 13px}.main{height:calc(100% - 67px)}.panel{top:10px;left:10px;width:calc(100% - 20px);padding:12px}.panel h2{font-size:14px}.notice{left:10px;right:10px;bottom:8px;max-width:none;font-size:10px}}
   .route-select{display:flex;gap:6px;margin-top:8px}.route-select button{flex:1;padding:8px 5px;font-size:11px}.route-select button.picking{background:#0a826d;color:white}.check{flex:1;font-size:11px;display:flex;align-items:center;gap:4px}.route-card{max-height:240px;overflow:auto}.route-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}.route-metric{border-radius:8px;background:#f0f5fa;padding:8px}.route-metric b{display:block;font-size:15px}.route-card.visible{display:block}.route-warning{margin-top:6px;color:#905c1a;font-size:11px}@media(max-width:650px){.panel{max-height:68vh;overflow:auto}.route-card{max-height:130px}}
 
+    .route-view{margin-top:10px;padding:9px;background:#f5f3fc;border:1px solid #dfd6f1;border-radius:9px}
+    .route-view-label{display:block;font-size:11px;font-weight:750;color:#554272;margin-bottom:7px}
+    .route-view-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+    .route-view-options label{display:flex;align-items:center;justify-content:center;gap:3px;font-size:11px;background:white;border:1px solid #dfd6ed;border-radius:7px;padding:7px 2px;white-space:nowrap;cursor:pointer}
+    .route-view-options input{margin:0;accent-color:#7545be}
+    .route-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .route-metric{padding:7px 5px;font-size:10px}.route-metric b{font-size:14px}
+    .comfort-disclaimer{margin-top:8px;font-size:10px;color:#766085;line-height:1.5}
     .search-wrap{margin-top:11px;border:1px solid #d8e5f0;background:#f7fafe;padding:10px;border-radius:11px}
     .search-wrap label{font-size:11px;color:#385772;font-weight:750;display:block;margin-bottom:4px}
     .search-input-row{display:flex;gap:5px;margin-bottom:8px}
@@ -86,6 +94,7 @@
       .search-wrap input[type=text]{font-size:16px}
       .search-results{max-height:180px}
       .route-card{max-height:none;overflow:visible}
+      .route-grid{gap:4px}.route-metric{font-size:9px}.route-metric b{font-size:12px}
       .notice{display:none}
       .safety-inline{display:none}
       .maplibregl-ctrl-bottom-right{bottom:85px}
@@ -96,7 +105,7 @@
   <header><div><h1>같은 거리, 다른 걸음 </h1><small>경사를 고려한 내 걸음에 맞는 길찾기</small></div><a class="return" href="./">메인으로</a></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
     <section class="panel is-collapsed" id="route-panel">
-      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.8</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
+      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
       <div id="panel-content">
       <div class="modes"><button id="flat">2D 평면</button><button id="tilt" class="active">2.5D 입체</button></div>
       <div class="row"><span class="dot start"></span>출발 <span id="start-label">새장골경로당</span> <span style="color:#98a8b7">→</span> 도착 <span id="end-label">연서시장</span></div>
@@ -113,10 +122,18 @@
       </div>
       <div class="route-select"><button type="button" id="pick-start">지도에서 출발 선택</button><button type="button" id="pick-end">지도에서 도착 선택</button></div>
       <div class="route-select"><button type="button" id="reset-points">기본 지점 복원</button><label class="check"><input type="checkbox" id="avoid-stairs"> 표시된 계단 제외</label></div>
+      <div class="route-view" role="group" aria-label="지도에 표시할 경로">
+        <span class="route-view-label">지도에 표시할 경로</span>
+        <div class="route-view-options">
+          <label><input type="radio" name="route-mode" value="distance"> 최단거리</label>
+          <label><input type="radio" name="route-mode" value="time"> 토블러</label>
+          <label><input type="radio" name="route-mode" value="comfort" checked> 경사 부담↓</label>
+        </div>
+      </div>
       <button class="route-btn" id="show-route" disabled>보행 도로망 불러오는 중…</button>
-      <label class="check" style="margin-top:9px;font-size:12px"><input type="checkbox" id="show-slopes" disabled> <b>오르막·내리막 색상 표시</b> <small style="color:#70859b">(토블러 경로 기준)</small></label>
+      <label class="check" style="margin-top:9px;font-size:12px"><input type="checkbox" id="show-slopes" disabled> <b>오르막·내리막 색상 표시</b> <small style="color:#70859b">(선택한 경로 기준)</small></label>
       <div class="slope-legend" id="slope-legend"><div class="slope-key"><i class="swatch" style="background:#d96d30"></i><span>오르막 ▲</span><i class="swatch" style="background:#279b7c"></i><span>내리막 ▼</span><i class="swatch" style="background:#8797a7"></i><span>완만한 길 —</span><i class="swatch" style="background:#a7a4a0"></i><span>경사 미확인 ?</span></div><div class="slope-tip">현재 이동 방향 기준 · ±3% 분류 · 시험용 10m DEM에서 직접 보간한 경사입니다. 현장 검증 전입니다.</div></div>
-      <div id="route-card" class="route-card" aria-live="polite"></div><div id="segment-info" class="route-card" aria-live="polite" style="display:none"></div><p class="hint">파란색·주황색 경로의 도로 구간을 클릭하면 해당 구간의 DEM 고도·경사·토블러 시간을 볼 수 있습니다.</p>
+      <div id="route-card" class="route-card" aria-live="polite"></div><div id="segment-info" class="route-card" aria-live="polite" style="display:none"></div><p class="hint">지도에 표시된 경로의 도로 구간을 클릭하면 해당 구간의 DEM 고도·경사·토블러 시간을 볼 수 있습니다.</p>
       <div class="state" id="state" role="status" aria-live="polite"></div>
       <div class="test-label">시험용 경로 · 현장 검증 전</div>
       </div>
@@ -152,7 +169,7 @@
       const slopesBox=document.getElementById('show-slopes');
       const slopeLegend=document.getElementById('slope-legend');
       const sourceId='teetertotter-dynamic';
-      const lineIds=['teetertotter-shortest','teetertotter-tobler'];
+      const lineIds=['teetertotter-shortest','teetertotter-tobler','teetertotter-comfort'];
       const slopeSourceId='teetertotter-slopes',slopeLayerId='teetertotter-slope-segments';
       let reverseEdges=null, lastEasiest=null;
       let graph=null, adj=null, pickMode=null, selectedStart=start.slice(), selectedEnd=end.slice(), shown=true;
@@ -313,6 +330,9 @@
       if(!window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true);
       for(const input of [startInput,endInput])input.addEventListener('focus',()=>{if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true)});
       
+      let activeMode='comfort';
+      let routeCandidates={distance:null,time:null,comfort:null};
+      const routeModeInputs=[...document.querySelectorAll('input[name="route-mode"]')];
       const graphUrl=new URL('./data/walk_graph.json',location.href);
       function haversineApprox(a,b){return Math.hypot((a[0]-b[0])*88000,(a[1]-b[1])*111200)}
       function nearestNode(pos){
@@ -326,13 +346,24 @@
         pop(){let a=this.a;if(!a.length)return null;const result=a[0],last=a.pop();if(a.length){let i=0;while(2*i+1<a.length){let ch=2*i+1;if(ch+1<a.length && a[ch+1][0]<a[ch][0])ch++;if(a[ch][0]>=last[0])break;a[i]=a[ch];i=ch}a[i]=last}return result}
         get size(){return this.a.length}
       }
+
+      // v0.9 experimental comfort preference (NOT calibrated for elderly users).
+      // Use directed DEM grade. Stronger penalty for steep descent as well as ascent.
+      // Keeps all costs nonnegative; slope/quality flags remain visibly unverified.
+      function comfortCost(edge){
+        const base=edge[3],grade=edge[7];
+        if(!Number.isFinite(base)||!Number.isFinite(grade))return null;
+        const uphill=Math.max(0,grade-0.04);
+        const downhill=Math.max(0,-grade-0.06);
+        return base*(1+5*uphill+8*downhill);
+      }
       function dijkstra(from,to,weight,avoidSteps){
         const n=graph.nodes.length,dist=new Float64Array(n);dist.fill(Infinity);
         const prev=new Int32Array(n),used=new Int32Array(n);prev.fill(-1);used.fill(-1);
         const pq=new MinHeap();dist[from]=0;pq.push([0,from]);
         while(pq.size){const [cur,u]=pq.pop();if(cur>dist[u]+1e-9)continue;if(u===to)break;
           for(const edgeIndex of adj[u]){const edge=graph.edges[edgeIndex];if(avoidSteps && edge[4]===1)continue;
-            const cost=weight==='time'?edge[3]:edge[2];if(cost===null || cost<0 || !Number.isFinite(cost))continue;
+            const cost=weight==='time'?edge[3]:weight==='comfort'?comfortCost(edge):edge[2];if(cost===null || cost<0 || !Number.isFinite(cost))continue;
             const v=edge[1],cand=cur+cost;if(cand<dist[v]-1e-9){dist[v]=cand;prev[v]=u;used[v]=edgeIndex;pq.push([cand,v])}
           }
         }
@@ -392,7 +423,8 @@
       }
       function setLayerVisibility(){
         const showColored=shown && slopesBox.checked;
-        for(const id of lineIds)if(map.getLayer(id))map.setLayoutProperty(id,'visibility',shown&&!showColored?'visible':'none');
+        const modeIdx={distance:0,time:1,comfort:2}[activeMode];
+        for(const [index,id] of lineIds.entries())if(map.getLayer(id))map.setLayoutProperty(id,'visibility',shown&&!showColored&&index===modeIdx?'visible':'none');
         if(map.getLayer(slopeLayerId))map.setLayoutProperty(slopeLayerId,'visibility',showColored?'visible':'none');
         slopeLegend.classList.toggle('visible',showColored);
       }
@@ -401,7 +433,7 @@
         const m=v=>`${Math.round(v).toLocaleString()}m`;
         return `<div class="slope-metrics"><div class="slope-metric">▲ 오르막 구간<br><b>${m(stats.up)}</b></div><div class="slope-metric">▼ 내리막 구간<br><b>${m(stats.down)}</b></div></div>`;
       }
-      function routeHTML(shortest,easiest,sa,ea,slopeStats){
+      function routeHTML(shortest,easiest,comfort,sa,ea,slopeStats){
         const fmt=(r)=>r?`${Math.round(r.meters).toLocaleString()}m`:'탐색 불가';
         const time=(r)=>r && r.missing===0 ? `${r.minutes.toFixed(1)}분`:'확인 불가';
         const same=shortest && easiest && shortest.coords.length===easiest.coords.length && shortest.coords.every((p,i)=>p[0]===easiest.coords[i][0] && p[1]===easiest.coords[i][1]);
@@ -409,8 +441,9 @@
         if(sa.d>50||ea.d>50)warnings.push(`도로망까지 직선 연결거리 출발 ${Math.round(sa.d)}m · 도착 ${Math.round(ea.d)}m (경로 미포함)`);
         if(shortest?.missing)warnings.push('최단 경로 일부 고도 미확인: 예상 시간 생략');
         if(!easiest)warnings.push('확인된 고도 구간만으로는 토블러 경로가 연결되지 않습니다');
+        if(!comfort)warnings.push('경사 부담 경로를 찾지 못했습니다');
 
-        return `<div class="route-grid"><div class="route-metric"><span>🔵 최단거리</span><b>${fmt(shortest)}</b><span>기본 토블러 ${time(shortest)}</span></div><div class="route-metric"><span>🟠 토블러 최소시간</span><b>${fmt(easiest)}</b><span>기본 토블러 ${time(easiest)}</span></div></div>${slopeSummary(slopeStats)}<div class="route-warning">${warnings.join(' / ')}</div>`;
+        return `<div class="route-grid"><div class="route-metric"><span>🔵 최단거리</span><b>${fmt(shortest)}</b><span>예상 ${time(shortest)}</span></div><div class="route-metric"><span>🟠 토블러 최소시간</span><b>${fmt(easiest)}</b><span>예상 ${time(easiest)}</span></div><div class="route-metric"><span>🟣 경사 부담↓</span><b>${fmt(comfort)}</b><span>토블러 기준 ${time(comfort)}</span></div></div>${slopeSummary(slopeStats)}<div class="route-warning">${warnings.join(' / ')}</div><div class="comfort-disclaimer">경사 부담↓은 급경사 오르막·내리막에 추가 가중치를 주는 <b>시험용 모델</b>입니다. 고령자의 실제 이동시간이나 안전을 보증하지 않습니다. 계단 회피는 OSM에 표시된 계단에 한정됩니다.</div>`;
       }
       function updateLayers(features){
         const source=map.getSource(sourceId);
@@ -418,7 +451,8 @@
         if(source)source.setData(geojson);else{
           map.addSource(sourceId,{type:'geojson',data:geojson});
           map.addLayer({id:lineIds[0],type:'line',source:sourceId,filter:['==',['get','kind'],'short'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1689ff','line-width':7,'line-opacity':0.92}});
-          map.addLayer({id:lineIds[1],type:'line',source:sourceId,filter:['==',['get','kind'],'easy'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#e68a20','line-width':5,'line-dasharray':[2,1.5]}});
+          map.addLayer({id:lineIds[1],type:'line',source:sourceId,filter:['==',['get','kind'],'easy'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#e68a20','line-width':6}});
+          map.addLayer({id:lineIds[2],type:'line',source:sourceId,filter:['==',['get','kind'],'comfort'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#8c4fd3','line-width':7}});
         }
       }
       const pointMarkers=[];
@@ -436,22 +470,26 @@
           const avoid=stairsBox.checked;
           const shortest=dijkstra(s.i,t.i,'distance',avoid);
           const easiest=dijkstra(s.i,t.i,'time',avoid);
+          const comfort=dijkstra(s.i,t.i,'comfort',avoid);
+          routeCandidates={distance:shortest,time:easiest,comfort};
           const same=shortest && easiest && JSON.stringify(shortest.coords)===JSON.stringify(easiest.coords);
           const features=[];
           if(shortest)features.push({type:'Feature',properties:{kind:'short'},geometry:{type:'LineString',coordinates:shortest.coords}});
-          if(easiest && !same)features.push({type:'Feature',properties:{kind:'easy'},geometry:{type:'LineString',coordinates:easiest.coords}});
+          if(easiest)features.push({type:'Feature',properties:{kind:'easy'},geometry:{type:'LineString',coordinates:easiest.coords}});
+          if(comfort)features.push({type:'Feature',properties:{kind:'comfort'},geometry:{type:'LineString',coordinates:comfort.coords}});
           updateLayers(features);
-          lastEasiest=easiest;
-          const slopeData=slopeFeatures(easiest);
+          const active=routeCandidates[activeMode]||comfort||easiest||shortest;
+          lastEasiest=active;
+          const slopeData=slopeFeatures(active);
           updateSlopeLayer(slopeData.features);document.getElementById('segment-info').style.display='none';
-          card.classList.add('visible');card.innerHTML=routeHTML(shortest,easiest,s,t,slopeData.stats);
-          slopesBox.disabled=!easiest;
+          card.classList.add('visible');card.innerHTML=routeHTML(shortest,easiest,comfort,s,t,slopeData.stats);
+          slopesBox.disabled=!active;
           shown=true;
           setLayerVisibility();
-          if(!shortest&&!easiest){shown=false;setLayerVisibility();routeButton.textContent='현재 선택 지점은 연결되지 않습니다';routeButton.disabled=true;return;}
+          if(!shortest&&!easiest&&!comfort){shown=false;setLayerVisibility();routeButton.textContent='현재 선택 지점은 연결되지 않습니다';routeButton.disabled=true;return;}
           routeButton.disabled=false;shown=true;routeButton.textContent='계산 경로 숨기기';
           setLayerVisibility();
-          const bounds=new maplibregl.LngLatBounds();(shortest||easiest).coords.forEach(p=>bounds.extend(p));
+          const bounds=new maplibregl.LngLatBounds();active.coords.forEach(p=>bounds.extend(p));
           map.fitBounds(bounds,{padding:{top:155,bottom:90,left:Math.min(400,innerWidth*.33),right:55},maxZoom:16,duration:600});
         }catch(err){card.textContent='계산 오류: '+err.message;card.classList.add('visible');console.error(err)}
       }
@@ -459,6 +497,7 @@
       document.getElementById('pick-start').onclick=()=>setPick('start');
       document.getElementById('pick-end').onclick=()=>setPick('end');
       document.getElementById('reset-points').onclick=()=>{selectedStart=start.slice();selectedEnd=end.slice();startLabel.textContent='새장골경로당';endLabel.textContent='연서시장';startInput.value='새장골경로당';endInput.value='연서시장';++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);setPick(null);updatePointMarkers();recompute()};
+      for(const item of routeModeInputs)item.addEventListener('change',()=>{if(!item.checked)return;activeMode=item.value;recompute()});
       stairsBox.onchange=()=>recompute();
       slopesBox.onchange=()=>setLayerVisibility();
       routeButton.onclick=()=>{shown=!shown;setLayerVisibility();routeButton.textContent=shown?'계산 경로 숨기기':'계산 경로 표시'};
