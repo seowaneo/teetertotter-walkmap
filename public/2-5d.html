@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#102743" />
-  <title>자체 길찾기 실험 · 같은 거리, 다른 걸음</title>
+  <title>같은 거리, 다른 걸음</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.css" />
   <style>
     *{box-sizing:border-box}html,body{height:100%;margin:0;font-family:system-ui,'Noto Sans KR',sans-serif;color:#12283e;background:#eef3f8}
@@ -60,13 +60,22 @@
 
     .panel-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
     .panel-top h2{margin-bottom:8px}
-    #panel-toggle{display:none}
+    #panel-toggle{display:block;background:#174c7c;color:white;border:0;font-size:12px;padding:9px 12px;flex-shrink:0}
+    .panel.is-collapsed{width:auto;max-width:calc(100% - 28px);padding:12px 14px;max-height:none;overflow:hidden}
+    .panel.is-collapsed #panel-content{display:none}
+    .panel.is-collapsed .eyebrow{display:none}
+    .panel.is-collapsed .panel-top h2{margin:0;font-size:14px}
+    .state:not(.bad){display:none}
+    .route-warning:empty{display:none}
+    .test-label{font-size:10px;color:#9a6b2c;margin-top:8px}
+    @media(min-width:651px){.panel:not(.is-collapsed){max-height:calc(100dvh - 105px);overflow-y:auto;overscroll-behavior:contain}}
     .safety-inline{display:none;font-size:11px;line-height:1.5;color:#865b22;background:#fff8e9;padding:9px;border-radius:8px}
     @media(max-width:650px){
       header{height:58px;padding:7px 12px}header h1{font-size:16px}header small{font-size:10px}
       .main{height:calc(100vh - 58px);height:calc(100dvh - 58px)}
-      .panel{top:auto;bottom:12px;left:10px;right:10px;width:auto;max-width:none;max-height:min(64dvh,570px);padding:12px;border-radius:18px;overflow-y:auto;overscroll-behavior:contain;box-shadow:0 6px 26px #062a4560}
-      .panel.is-collapsed{max-height:70px;overflow:hidden}
+      .panel{top:auto;bottom:12px;left:10px;right:10px;width:auto;max-width:none;max-height:min(48dvh,440px);padding:12px;border-radius:18px;overflow-y:auto;overscroll-behavior:contain;box-shadow:0 6px 26px #062a4560}
+      .panel.is-collapsed{bottom:12px;max-height:64px;overflow:hidden;max-width:none;width:calc(100% - 20px);padding:12px}
+      .panel.is-collapsed .panel-top{min-height:38px}
       .panel.is-collapsed #panel-content{display:none}
       #panel-toggle{display:block;background:#174c7c;color:white;border:0;font-size:12px;padding:9px 12px}
       .panel-top h2{margin:2px 0 0;font-size:15px}
@@ -78,7 +87,7 @@
       .search-results{max-height:180px}
       .route-card{max-height:none;overflow:visible}
       .notice{display:none}
-      .safety-inline{display:block}
+      .safety-inline{display:none}
       .maplibregl-ctrl-bottom-right{bottom:85px}
     }
   </style>
@@ -87,7 +96,7 @@
   <header><div><h1>같은 거리, 다른 걸음 </h1><small>경사를 고려한 내 걸음에 맞는 길찾기</small></div><a class="return" href="./">메인으로</a></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
     <section class="panel is-collapsed" id="route-panel">
-      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.7.3</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
+      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.8</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
       <div id="panel-content">
       <div class="modes"><button id="flat">2D 평면</button><button id="tilt" class="active">2.5D 입체</button></div>
       <div class="row"><span class="dot start"></span>출발 <span id="start-label">새장골경로당</span> <span style="color:#98a8b7">→</span> 도착 <span id="end-label">연서시장</span></div>
@@ -106,14 +115,13 @@
       <div class="route-select"><button type="button" id="reset-points">기본 지점 복원</button><label class="check"><input type="checkbox" id="avoid-stairs"> 표시된 계단 제외</label></div>
       <button class="route-btn" id="show-route" disabled>보행 도로망 불러오는 중…</button>
       <label class="check" style="margin-top:9px;font-size:12px"><input type="checkbox" id="show-slopes" disabled> <b>오르막·내리막 색상 표시</b> <small style="color:#70859b">(토블러 경로 기준)</small></label>
-      <div class="slope-legend" id="slope-legend"><div class="slope-key"><i class="swatch" style="background:#d96d30"></i><span>오르막 ▲</span><i class="swatch" style="background:#279b7c"></i><span>내리막 ▼</span><i class="swatch" style="background:#8797a7"></i><span>완만한 길 —</span><i class="swatch" style="background:#a7a4a0"></i><span>경사 미확인 ?</span></div><div class="slope-tip">현재 이동 방향 기준 · ±3%를 기준으로 분류 · 원본 DEM 측정값이 아닌 토블러 시간비용에서 추정한 경사입니다.</div></div>
-      <div id="route-card" class="route-card" aria-live="polite"></div>
-      <p class="hint">드래그해 이동하고, Ctrl+드래그(또는 마우스 오른쪽 드래그)로 시점을 바꿀 수 있습니다. 건물 높이는 공개 지도에 존재하는 값만 사용하며, 없는 경우 임의로 보충하지 않습니다.</p>
-      <div class="state" id="state">지도 리소스를 불러오는 중...</div>
-      <p class="safety-inline">시험용 데이터로 계산한 경로입니다. 출입구·횡단보도·계단 정보가 불완전할 수 있어 실제 보행 안내로 사용하지 마세요.</p>
+      <div class="slope-legend" id="slope-legend"><div class="slope-key"><i class="swatch" style="background:#d96d30"></i><span>오르막 ▲</span><i class="swatch" style="background:#279b7c"></i><span>내리막 ▼</span><i class="swatch" style="background:#8797a7"></i><span>완만한 길 —</span><i class="swatch" style="background:#a7a4a0"></i><span>경사 미확인 ?</span></div><div class="slope-tip">현재 이동 방향 기준 · ±3% 분류 · 시험용 10m DEM에서 직접 보간한 경사입니다. 현장 검증 전입니다.</div></div>
+      <div id="route-card" class="route-card" aria-live="polite"></div><div id="segment-info" class="route-card" aria-live="polite" style="display:none"></div><p class="hint">파란색·주황색 경로의 도로 구간을 클릭하면 해당 구간의 DEM 고도·경사·토블러 시간을 볼 수 있습니다.</p>
+      <div class="state" id="state" role="status" aria-live="polite"></div>
+      <div class="test-label">시험용 경로 · 현장 검증 전</div>
       </div>
     </section>
-    <div class="notice">실험용 OSM+보간 DEM 기반 길찾기입니다. 출입구·횡단·계단 누락 가능. 현장 검증 전, 실제 보행 안내로 사용하지 마세요.</div>
+
   </div>
   <script src="./config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
@@ -334,22 +342,29 @@
         for(const k of path){let e=graph.edges[k];coords.push(graph.nodes[e[1]]);meters+=e[2];if(e[3]===null)missing++;else minutes+=e[3];if(e[4]===1)steps++}
         return {coords,meters,minutes,missing,steps,edgeIds:path};
       }
-      // Reconstruct a provisional *signed* grade from the forward/reverse Tobler times.
-      // Grade is NOT an independent DEM measurement: the original graph stores travel times only.
-      // For a segment L, Tobler time (minutes) = L/100 * exp(3.5*abs(grade+0.05)).
+      // v0.8: signed grade is stored from the original 10m pilot DEM, not reverse-estimated from time.
       function estimatedGrade(edgeIndex){
-        const e=graph.edges[edgeIndex];
-        if(!e||!Number.isFinite(e[3])||e[3]<=0||e[2]<=0)return null;
-        const reverse=reverseEdges.get(e[1]+','+e[0]);
-        if(!reverse||!Number.isFinite(reverse[3])||reverse[3]<=0)return null;
-        const a=Math.log(e[3]/(e[2]/100))/3.5;
-        if(!Number.isFinite(a)||a<0)return null;
-        const candidates=[a-0.05,-a-0.05];
-        const score=s=>Math.abs(Math.log(reverse[3]/(reverse[2]/100))-3.5*Math.abs(-s+0.05));
-        const g=score(candidates[0])<=score(candidates[1])?candidates[0]:candidates[1];
-        // Reject inconsistent values; rounding tolerances are in the precomputed time field.
-        if(Math.abs(g)>0.6||score(g)>0.035)return null;
-        return g;
+        const e=graph?.edges?.[edgeIndex];
+        return e && Number.isFinite(e[7]) ? e[7] : null;
+      }
+      const qualityLabels={dem_unverified:'DEM 보간값 · 현장 미검증',steep_review:'급경사 후보 · 현장 확인 필요',short_segment_review:'짧은 구간 · 오차 민감',missing_elevation:'고도 없음',invalid_distance:'거리 이상'};
+      function showSegment(edgeIndex){
+        const e=graph?.edges?.[edgeIndex];if(!e)return;
+        const z1=e[5],z2=e[6],g=e[7],q=e[8];
+        const f=v=>Number.isFinite(v)?v.toFixed(1):'확인 불가';
+        const text=`<b>선택한 도로 구간</b><div style="margin-top:6px">거리 ${f(e[2])}m · 경사 ${Number.isFinite(g)?(g*100).toFixed(1)+'%':'미확인'}<br>시작 고도 ${f(z1)}m → 끝 고도 ${f(z2)}m<br>기본 토블러 ${Number.isFinite(e[3])?e[3].toFixed(2)+'분':'미확인'}<br><span style="color:#9a6b21">${qualityLabels[q]||'자료 품질 미확인'} · 등고선·표고점 보간 DEM 기반</span></div>`;
+        const el=document.getElementById('segment-info');el.innerHTML=text;el.style.display='block';
+      }
+      function nearestRouteEdge(pixel){
+        const segments=lastEasiest?.edgeIds||[];let chosen=-1,score=16;
+        for(const idx of segments){
+          const e=graph.edges[idx],a=map.project(graph.nodes[e[0]]),b=map.project(graph.nodes[e[1]]);
+          const vx=b.x-a.x,vy=b.y-a.y,den=vx*vx+vy*vy;
+          const t=den?Math.max(0,Math.min(1,((pixel.x-a.x)*vx+(pixel.y-a.y)*vy)/den)):0;
+          const d=Math.hypot(pixel.x-a.x-t*vx,pixel.y-a.y-t*vy);
+          if(d<score){score=d;chosen=idx}
+        }
+        return chosen;
       }
       function gradeClass(grade){return grade==null?'unknown':grade>0.03?'up':grade< -0.03?'down':'flat'}
       function slopeFeatures(route){
@@ -384,7 +399,7 @@
       function slopeSummary(stats){
         if(!stats)return '';
         const m=v=>`${Math.round(v).toLocaleString()}m`;
-        return `<div class="slope-metrics"><div class="slope-metric">▲ 오르막 구간<br><b>${m(stats.up)}</b></div><div class="slope-metric">▼ 내리막 구간<br><b>${m(stats.down)}</b></div></div><div class="route-warning">추정 누적 상승 약 ${m(stats.ascent)}, 하강 약 ${m(stats.descent)} · 경사 미확인 ${m(stats.unknown)} · 오차 검증 전</div>`;
+        return `<div class="slope-metrics"><div class="slope-metric">▲ 오르막 구간<br><b>${m(stats.up)}</b></div><div class="slope-metric">▼ 내리막 구간<br><b>${m(stats.down)}</b></div></div>`;
       }
       function routeHTML(shortest,easiest,sa,ea,slopeStats){
         const fmt=(r)=>r?`${Math.round(r.meters).toLocaleString()}m`:'탐색 불가';
@@ -394,8 +409,8 @@
         if(sa.d>50||ea.d>50)warnings.push(`도로망까지 직선 연결거리 출발 ${Math.round(sa.d)}m · 도착 ${Math.round(ea.d)}m (경로 미포함)`);
         if(shortest?.missing)warnings.push('최단 경로 일부 고도 미확인: 예상 시간 생략');
         if(!easiest)warnings.push('확인된 고도 구간만으로는 토블러 경로가 연결되지 않습니다');
-        warnings.push('OSM에 표시되지 않은 계단·횡단보도·통행 제한은 반영되지 않았습니다');
-        return `<div class="route-grid"><div class="route-metric"><span>🔵 최단거리</span><b>${fmt(shortest)}</b><span>기본 토블러 ${time(shortest)}</span></div><div class="route-metric"><span>🟠 토블러 최소시간</span><b>${fmt(easiest)}</b><span>기본 토블러 ${time(easiest)}</span></div></div>${slopeSummary(slopeStats)}<div class="route-warning">${same?'두 경로가 동일한 도로를 지납니다. ':''}${warnings.join(' / ')}</div>`;
+
+        return `<div class="route-grid"><div class="route-metric"><span>🔵 최단거리</span><b>${fmt(shortest)}</b><span>기본 토블러 ${time(shortest)}</span></div><div class="route-metric"><span>🟠 토블러 최소시간</span><b>${fmt(easiest)}</b><span>기본 토블러 ${time(easiest)}</span></div></div>${slopeSummary(slopeStats)}<div class="route-warning">${warnings.join(' / ')}</div>`;
       }
       function updateLayers(features){
         const source=map.getSource(sourceId);
@@ -428,7 +443,7 @@
           updateLayers(features);
           lastEasiest=easiest;
           const slopeData=slopeFeatures(easiest);
-          updateSlopeLayer(slopeData.features);
+          updateSlopeLayer(slopeData.features);document.getElementById('segment-info').style.display='none';
           card.classList.add('visible');card.innerHTML=routeHTML(shortest,easiest,s,t,slopeData.stats);
           slopesBox.disabled=!easiest;
           shown=true;
@@ -440,23 +455,24 @@
           map.fitBounds(bounds,{padding:{top:155,bottom:90,left:Math.min(400,innerWidth*.33),right:55},maxZoom:16,duration:600});
         }catch(err){card.textContent='계산 오류: '+err.message;card.classList.add('visible');console.error(err)}
       }
-      function setPick(mode){pickMode=mode;document.getElementById('pick-start').classList.toggle('picking',mode==='start');document.getElementById('pick-end').classList.toggle('picking',mode==='end');setState(mode?`지도에서 ${mode==='start'?'출발':'도착'} 위치를 클릭해 주세요 (보행망에 가장 가까운 노드 연결)`:'계산 준비 완료')}
+      function setPick(mode){pickMode=mode;document.getElementById('pick-start').classList.toggle('picking',mode==='start');document.getElementById('pick-end').classList.toggle('picking',mode==='end');setState(mode?`지도에서 ${mode==='start'?'출발':'도착'} 위치를 클릭해 주세요 (보행망에 가장 가까운 노드 연결)`:'')}
       document.getElementById('pick-start').onclick=()=>setPick('start');
       document.getElementById('pick-end').onclick=()=>setPick('end');
       document.getElementById('reset-points').onclick=()=>{selectedStart=start.slice();selectedEnd=end.slice();startLabel.textContent='새장골경로당';endLabel.textContent='연서시장';startInput.value='새장골경로당';endInput.value='연서시장';++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);setPick(null);updatePointMarkers();recompute()};
       stairsBox.onchange=()=>recompute();
       slopesBox.onchange=()=>setLayerVisibility();
       routeButton.onclick=()=>{shown=!shown;setLayerVisibility();routeButton.textContent=shown?'계산 경로 숨기기':'계산 경로 표시'};
-      map.on('click',e=>{if(!pickMode||!graph)return;const p=[e.lngLat.lng,e.lngLat.lat],snap=nearestNode(p);
+      map.on('click',e=>{if(!graph)return;if(!pickMode){const idx=nearestRouteEdge(e.point);if(idx>=0)showSegment(idx);return;}const p=[e.lngLat.lng,e.lngLat.lat],snap=nearestNode(p);
         if(snap.d>90){setState(`이 지역 도로망에서 ${Math.round(snap.d)}m 떨어져 있습니다. 가까운 도로를 선택해 주세요`,true);return}
         if(pickMode==='start'){selectedStart=p;startLabel.textContent='지도 선택 위치';startInput.value='지도 선택 위치'}else{selectedEnd=p;endLabel.textContent='지도 선택 위치';endInput.value='지도 선택 위치'}
         setPick(null);updatePointMarkers();recompute();
+        if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(false);
       });
       async function loadGraph(){
         try{
           const res=await fetch(graphUrl.href,{cache:'no-cache'});if(!res.ok)throw new Error(`HTTP ${res.status}: public/data/walk_graph.json 확인`);
           graph=await res.json();
-          if(graph.schema!=='teetertotter-walkgraph-v1'||!Array.isArray(graph.nodes)||!Array.isArray(graph.edges))throw new Error('지원하지 않는 도로망 형식');
+          if(graph.schema_revision!=='v1.1-elevation-fields'||!Array.isArray(graph.nodes)||!Array.isArray(graph.edges)||!Array.isArray(graph.edges[0])||graph.edges[0].length<9)throw new Error('v0.8 도로망 데이터가 필요합니다. public/data/walk_graph.json을 v0.8 파일로 교체해 주세요.');
           reverseEdges=new Map(graph.edges.map(e=>[e[0]+','+e[1],e]));
           adj=Array.from({length:graph.nodes.length},()=>[]);
           graph.edges.forEach((e,i)=>{if(adj[e[0]])adj[e[0]].push(i)});
