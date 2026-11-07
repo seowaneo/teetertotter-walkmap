@@ -43,10 +43,11 @@
     .route-view-options label:has(input:checked){border-color:#9bb4cf;background:#eff6ff;font-weight:750}
     .route-key{width:15px;height:0;border-top:4px solid;flex:0 0 15px;border-radius:2px}
     .route-key-short{border-color:#1689ff}
-    .route-key-time{border-color:#e68a20;border-top-style:dashed}
-    .route-key-comfort{border-color:#8c4fd3;border-top-style:dotted}
+    .route-key-time{border-color:#e68a20}
+    .route-key-comfort{border-color:#8c4fd3}
     .route-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
     .route-metric{padding:7px 5px;font-size:10px}.route-metric b{font-size:14px}
+    .route-compare-note{font-size:11px;color:#415c76;line-height:1.5;margin-top:8px}
     .comfort-disclaimer{margin-top:8px;font-size:10px;color:#766085;line-height:1.5}
     .search-wrap{margin-top:11px;border:1px solid #d8e5f0;background:#f7fafe;padding:10px;border-radius:11px}
     .search-wrap label{font-size:11px;color:#385772;font-weight:750;display:block;margin-bottom:4px}
@@ -131,7 +132,7 @@
         <span class="route-view-label">지도에 표시할 경로</span>
         <div class="route-view-options">
           <label><input type="checkbox" name="route-mode" value="distance" checked> <span class="route-key route-key-short"></span>최단거리</label>
-          <label><input type="checkbox" name="route-mode" value="time" checked> <span class="route-key route-key-time"></span>토블러</label>
+          <label><input type="checkbox" name="route-mode" value="time"> <span class="route-key route-key-time"></span>토블러</label>
           <label><input type="checkbox" name="route-mode" value="comfort" checked> <span class="route-key route-key-comfort"></span>경사 부담↓</label>
         </div>
       </div>
@@ -353,6 +354,8 @@
         get size(){return this.a.length}
       }
 
+      // Tobler routing uses edge[3], generated as (distance_m / 100) * exp(3.5 * abs(signed_grade + 0.05)).
+      // This is distinct from distance-only routing edge[2].
       // v0.9 experimental comfort preference (NOT calibrated for elderly users).
       // Use directed DEM grade. Stronger penalty for steep descent as well as ascent.
       // Keeps all costs nonnegative; slope/quality flags remain visibly unverified.
@@ -468,8 +471,17 @@
         if(shortest?.missing)warnings.push('최단 경로 일부 고도 미확인: 예상 시간 생략');
         if(!easiest)warnings.push('확인된 고도 구간만으로는 토블러 경로가 연결되지 않습니다');
         if(!comfort)warnings.push('경사 부담 경로를 찾지 못했습니다');
+        // Compare edge identities, not just rounded distances: identical totals do not prove identical routes.
+        const sameRoute=(a,b)=>!!a&&!!b&&a.edgeIds.length===b.edgeIds.length&&a.edgeIds.every((id,i)=>id===b.edgeIds[i]);
+        const timeDiff=sameRoute(shortest,easiest)
+          ? '최단거리와 토블러 경로가 동일합니다.'
+          : shortest&&easiest ? '최단거리와 토블러 경로가 서로 다릅니다.' : '';
+        const comfortDiff=sameRoute(shortest,comfort)
+          ? '최단거리와 경사 부담 경로가 동일합니다.'
+          : shortest&&comfort ? '최단거리와 경사 부담 경로가 서로 다릅니다.' : '';
+        const comparison=`<div class="route-compare-note">${[timeDiff,comfortDiff].filter(Boolean).join('<br>')}</div>`;
 
-        return `<div class="route-grid"><div class="route-metric"><span>🔵 최단거리</span><b>${fmt(shortest)}</b><span>예상 ${time(shortest)}</span></div><div class="route-metric"><span>🟠 토블러 최소시간</span><b>${fmt(easiest)}</b><span>예상 ${time(easiest)}</span></div><div class="route-metric"><span>🟣 경사 부담↓</span><b>${fmt(comfort)}</b><span>토블러 기준 ${time(comfort)}</span></div></div>${slopeSummary(slopeStats)}<div class="route-warning">${warnings.join(' / ')}</div><div class="comfort-disclaimer">경사 부담↓은 급경사 오르막·내리막에 추가 가중치를 주는 <b>시험용 모델</b>입니다. 고령자의 실제 이동시간이나 안전을 보증하지 않습니다. 계단 회피는 OSM에 표시된 계단에 한정됩니다.</div>`;
+        return `<div class="route-grid"><div class="route-metric"><span>🔵 최단거리</span><b>${fmt(shortest)}</b><span>예상 ${time(shortest)}</span></div><div class="route-metric"><span>🟠 토블러 최소시간</span><b>${fmt(easiest)}</b><span>예상 ${time(easiest)}</span></div><div class="route-metric"><span>🟣 경사 부담↓</span><b>${fmt(comfort)}</b><span>토블러 기준 ${time(comfort)}</span></div></div>${comparison}${slopeSummary(slopeStats)}<div class="route-warning">${warnings.join(' / ')}</div><div class="comfort-disclaimer">경사 부담↓은 급경사 오르막·내리막에 추가 가중치를 주는 <b>시험용 모델</b>입니다. 고령자의 실제 이동시간이나 안전을 보증하지 않습니다. 계단 회피는 OSM에 표시된 계단에 한정됩니다.</div>`;
       }
       function updateLayers(features){
         const source=map.getSource(sourceId);
@@ -477,8 +489,8 @@
         if(source)source.setData(geojson);else{
           map.addSource(sourceId,{type:'geojson',data:geojson});
           map.addLayer({id:lineIds[0],type:'line',source:sourceId,filter:['==',['get','kind'],'short'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1689ff','line-width':6,'line-opacity':0.92}});
-          map.addLayer({id:lineIds[1],type:'line',source:sourceId,filter:['==',['get','kind'],'easy'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#e68a20','line-width':5,'line-dasharray':[2.5,1.5]}});
-          map.addLayer({id:lineIds[2],type:'line',source:sourceId,filter:['==',['get','kind'],'comfort'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#8c4fd3','line-width':6,'line-dasharray':[.5,1.7]}});
+          map.addLayer({id:lineIds[1],type:'line',source:sourceId,filter:['==',['get','kind'],'easy'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#e68a20','line-width':5,'line-opacity':0.92}});
+          map.addLayer({id:lineIds[2],type:'line',source:sourceId,filter:['==',['get','kind'],'comfort'],layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#8c4fd3','line-width':6,'line-opacity':0.92}});
         }
       }
       const pointMarkers=[];
