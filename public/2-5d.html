@@ -105,46 +105,67 @@
       .safety-inline{display:none}
       .maplibregl-ctrl-bottom-right{bottom:85px}
     }
+
+    /* v0.9.3 · place cards, grouped route choices and floating view button */
+    .return,.modes,.row,.route-select,.notice,.test-label,.search-hint,.comfort-disclaimer,.route-compare-note,.route-warning:empty{display:none!important}
+    .search-wrap{border:0;background:transparent;padding:0;margin-top:0}
+    .location-fields{padding-right:0}
+    .location-field{margin:0;padding:13px 14px;min-height:88px;gap:13px;border:1px solid #d8e2ee;border-radius:17px;background:white;align-items:center;cursor:text}
+    .location-field:focus-within,.location-field.is-picking{border-color:#2b8bbf;box-shadow:0 0 0 2px #ddebfc}
+    .location-pin{display:flex;justify-content:center;align-items:center;font-size:27px;width:28px;height:33px;color:#078e75;flex:none;font-weight:700}
+    .destination .location-pin{color:#f16d31}
+    .location-text{flex:1;min-width:0}
+    .location-field label{font-size:10px;color:#74869b;font-weight:700;margin-bottom:1px}
+    .search-wrap .location-field input[type=text]{padding:0;display:block;width:100%;background:transparent;border:0;outline:0;font-size:16px;font-weight:800;color:#12283e;text-overflow:ellipsis}
+    .location-address{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#7289a6;font-size:11px;margin-top:4px;line-height:1.4}
+    .location-connector{height:22px;border-left:2px dashed #aabdd1;margin-left:27px}
+    .swap-points{right:8px;top:calc(50% - 1px);background:#fff!important;border:1px solid #d9e4ed!important;border-radius:50%!important;width:31px;height:31px;z-index:2;box-shadow:0 1px 4px #0a25301c;font-size:18px!important}
+    .search-results{max-height:196px;margin-top:8px}
+    .search-message:empty{display:none}
+    .search-message{margin-top:7px}
+    .route-view{margin-top:12px}
+    .route-view-options{display:flex;flex-wrap:wrap;gap:7px}
+    .route-view-options label{flex:1 1 auto;white-space:normal;font-size:11px;min-height:38px;padding:8px 10px}
+    .route-view-options label span.route-option-text{line-height:1.35}
+    .route-options-extra{margin-top:10px;display:flex}
+    .route-btn[hidden]{display:none!important}
+    .slope-metrics{margin-top:10px}
+    .view-toggle{position:absolute;z-index:4;right:14px;bottom:165px;width:54px;height:54px;border-radius:17px;border:1px solid #dce6f2;background:#fff;box-shadow:0 3px 15px #0b254530;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-size:22px;color:#234f76;padding:3px;line-height:1}
+    .view-toggle span{font-size:10px;font-weight:800;margin-top:4px}
+    .panel{max-width:360px}
+    @media(max-width:650px){.panel{max-height:min(55dvh,490px)}.view-toggle{bottom:200px;right:12px;width:48px;height:48px}.location-field{min-height:75px;padding:10px 13px}.route-view-options label{font-size:10px}.location-connector{height:16px}}
   </style>
 </head>
 <body>
-  <header><div><h1>같은 거리, 다른 걸음 </h1><small>경사를 고려한 내 걸음에 맞는 길찾기</small></div><a class="return" href="./">메인으로</a></header>
+  <header><div><h1>같은 거리, 다른 걸음 </h1><small>경사를 고려한 내 걸음에 맞는 길찾기</small></div></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
     <section class="panel is-collapsed" id="route-panel">
-      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9.1</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
+      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9.3</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
       <div id="panel-content">
-      <div class="modes"><button id="flat">2D 평면</button><button id="tilt" class="active">2.5D 입체</button></div>
-      <div class="row"><span class="dot start"></span>출발 <span id="start-label">새장골경로당</span> <span style="color:#98a8b7">→</span> 도착 <span id="end-label">연서시장</span></div>
-
       <div class="search-wrap" id="search-wrap">
         <div class="location-fields">
-          <div class="location-field origin"><span class="field-dot" aria-hidden="true"></span><div style="flex:1;min-width:0"><label for="start-query">출발지</label><input id="start-query" type="text" value="새장골경로당" placeholder="출발지를 검색하세요" autocomplete="off" aria-controls="search-results" aria-expanded="false"></div></div>
-          <div class="location-field destination"><span class="field-dot" aria-hidden="true"></span><div style="flex:1;min-width:0"><label for="end-query">도착지</label><input id="end-query" type="text" value="연서시장" placeholder="도착지를 검색하세요" autocomplete="off" aria-controls="search-results" aria-expanded="false"></div></div>
+          <div class="location-field origin" id="start-field"><span class="location-pin" aria-hidden="true"><svg width="26" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div class="location-text"><label for="start-query">출발지</label><input id="start-query" type="text" value="새장골경로당" placeholder="출발지 검색 또는 지도에서 선택" autocomplete="off" aria-controls="search-results" aria-expanded="false"><span class="location-address" id="start-address">서울 은평구 연서로37길 47</span></div></div>
+          <div class="location-connector" aria-hidden="true"></div>
+          <div class="location-field destination" id="end-field"><span class="location-pin" aria-hidden="true"><svg width="26" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div class="location-text"><label for="end-query">도착지</label><input id="end-query" type="text" value="연서시장" placeholder="도착지 검색 또는 지도에서 선택" autocomplete="off" aria-controls="search-results" aria-expanded="false"><span class="location-address" id="end-address">서울 은평구 통일로 850</span></div></div>
           <button type="button" id="swap-points" class="swap-points" aria-label="출발지와 도착지 바꾸기" title="출발지와 도착지 바꾸기">⇅</button>
         </div>
-        <p class="search-hint">각 입력칸에 장소명이나 주소를 입력하면 후보가 나타납니다. 결과를 누르면 해당 지점으로 바로 설정됩니다.</p>
         <div id="search-results" class="search-results" aria-live="polite"></div>
-        <div class="search-message" id="search-message">현재는 불광2동 도로망 안에서만 길찾기가 가능합니다. 검색되는 모든 장소가 길찾기 가능한 것은 아닙니다.</div>
+        <div class="search-message" id="search-message" aria-live="polite"></div>
       </div>
-      <div class="route-select"><button type="button" id="pick-start">지도에서 출발 선택</button><button type="button" id="pick-end">지도에서 도착 선택</button></div>
-      <div class="route-select"><button type="button" id="reset-points">기본 지점 복원</button><label class="check"><input type="checkbox" id="avoid-stairs"> 표시된 계단 제외</label></div>
+      <div class="route-options-extra"><label class="check"><input type="checkbox" id="avoid-stairs"> 표시된 계단 제외</label></div>
       <div class="route-view" role="group" aria-label="지도에 표시할 경로">
         <span class="route-view-label">지도에 표시할 경로</span>
-        <div class="route-view-options">
-          <label><input type="checkbox" name="route-mode" value="distance" checked> <span class="route-key route-key-short"></span>최단거리</label>
-          <label><input type="checkbox" name="route-mode" value="time"> <span class="route-key route-key-time"></span>토블러</label>
-          <label><input type="checkbox" name="route-mode" value="comfort" checked> <span class="route-key route-key-comfort"></span>경사 부담↓</label>
-        </div>
+        <div class="route-view-options" id="route-view-options"></div>
       </div>
-      <button class="route-btn" id="show-route" disabled>보행 도로망 불러오는 중…</button>
-      <label class="check" style="margin-top:9px;font-size:12px"><input type="checkbox" id="show-slopes" disabled> <b>오르막·내리막 색상 표시</b> <small id="slopes-caption" style="color:#70859b">(경로 1개 선택 시)</small></label>
+      <button class="route-btn" id="show-route" hidden disabled>보행 도로망 불러오는 중…</button>
+      <label class="check" style="margin-top:9px;font-size:12px"><input type="checkbox" id="show-slopes" disabled> <b>오르막·내리막 색상 표시</b> <small id="slopes-caption" style="color:#70859b">(우선순위: 경사 부담 → 토블러 → 최단거리)</small></label>
       <div class="slope-legend" id="slope-legend"><div class="slope-key"><i class="swatch" style="background:#d96d30"></i><span>오르막 ▲</span><i class="swatch" style="background:#279b7c"></i><span>내리막 ▼</span><i class="swatch" style="background:#8797a7"></i><span>완만한 길 —</span><i class="swatch" style="background:#a7a4a0"></i><span>경사 미확인 ?</span></div><div class="slope-tip">현재 이동 방향 기준 · ±3% 분류 · 시험용 10m DEM에서 직접 보간한 경사입니다. 현장 검증 전입니다.</div></div>
-      <div id="route-card" class="route-card" aria-live="polite"></div><div id="segment-info" class="route-card" aria-live="polite" style="display:none"></div><p class="hint">지도에 표시된 경로의 도로 구간을 클릭하면 해당 구간의 DEM 고도·경사·토블러 시간을 볼 수 있습니다.</p>
+      <div id="route-card" class="route-card" aria-live="polite"></div><div id="segment-info" class="route-card" aria-live="polite" style="display:none"></div>
       <div class="state" id="state" role="status" aria-live="polite"></div>
       <div class="test-label">시험용 경로 · 현장 검증 전</div>
       </div>
     </section>
-
+    <button type="button" id="view-toggle" class="view-toggle" aria-label="2D 평면 보기로 전환" title="2D 평면 보기로 전환">▱<span>2D</span></button>
   </div>
   <script src="./config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
@@ -169,8 +190,8 @@
       // The routing graph is static, but search, destination changes and shortest paths are dynamic.
       const routeButton=document.getElementById('show-route');
       const card=document.getElementById('route-card');
-      const startLabel=document.getElementById('start-label');
-      const endLabel=document.getElementById('end-label');
+      const startAddress=document.getElementById('start-address');
+      const endAddress=document.getElementById('end-address');
       const stairsBox=document.getElementById('avoid-stairs');
       const slopesBox=document.getElementById('show-slopes');
       const slopeLegend=document.getElementById('slope-legend');
@@ -230,13 +251,13 @@
               searchMsg('이 장소는 현재 길찾기 지원 구역 밖이거나 보행로에서 '+Math.round(snapped.d)+'m 떨어져 있습니다. 서울시 도로망 확장 후 지원할 수 있습니다.',true);
               map.flyTo({center:coord,zoom:15});return;
             }
-            if(searchTarget==='start'){selectedStart=coord;startLabel.textContent=item.name}
-            else{selectedEnd=coord;endLabel.textContent=item.name}
+            if(searchTarget==='start'){selectedStart=coord;startAddress.textContent=item.address||''}
+            else{selectedEnd=coord;endAddress.textContent=item.address||''}
             setPick(null);updatePointMarkers();recompute();
-            searchResults.classList.remove('visible');
+            ++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);
             (searchTarget==='start'?startInput:endInput).value=item.name;
             if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(false);
-            searchMsg(item.name+'을(를) '+(searchTarget==='start'?'출발지':'목적지')+'로 설정했습니다. 입구·도보 연결은 현장 확인이 필요합니다.');
+            searchMsg('');
           });
           searchResults.appendChild(b);
         }
@@ -295,7 +316,7 @@
             rankResult(a)-rankResult(b)||a.name.length-b.name.length
           ).slice(0,12);
           renderSearchResults(list);
-          searchMsg(list.length?'추천 장소를 누르면 '+(searchTarget==='start'?'출발지':'도착지')+'가 바로 설정됩니다.':'검색 결과가 없습니다. 장소명이나 정확한 도로명주소로 다시 검색해 주세요.');
+          searchMsg(list.length?'':'검색 결과가 없습니다.');
         }catch(err){if(seq===searchSeq)searchMsg(err.message,true)}
       }
       // Automatically fetch suggestions as the user types (no search click required).
@@ -312,22 +333,22 @@
         suggestTimer=setTimeout(()=>{suggestTimer=null;runPlaceSearch()},220);
       };
       for(const [target,input] of [['start',startInput],['end',endInput]]){
-        input.addEventListener('focus',()=>{setSearchTarget(target);if(input.value.trim())scheduleSuggestions();});
+        input.addEventListener('focus',()=>{setSearchTarget(target);setPick(target);if(input.value.trim())scheduleSuggestions();});
         input.addEventListener('input',()=>{setSearchTarget(target);scheduleSuggestions();});
         input.addEventListener('keydown',e=>{
           if(e.key==='Enter'&&!e.isComposing){e.preventDefault();setSearchTarget(target);clearTimeout(suggestTimer);runPlaceSearch()}
-          if(e.key==='Escape'){clearTimeout(suggestTimer);renderSearchResults([]);input.blur()}
+          if(e.key==='Escape'){clearTimeout(suggestTimer);renderSearchResults([]);setPick(null);input.blur()}
         });
       }
       document.getElementById('swap-points').addEventListener('click',()=>{
         const oldStart=selectedStart.slice(),oldEnd=selectedEnd.slice();
         selectedStart=oldEnd;selectedEnd=oldStart;
-        const sl=startLabel.textContent,el=endLabel.textContent;
-        startLabel.textContent=el;endLabel.textContent=sl;
+        const sl=startInput.value,el=endInput.value,sa=startAddress.textContent,ea=endAddress.textContent;
+        startAddress.textContent=ea;endAddress.textContent=sa;
         startInput.value=el;endInput.value=sl;
         ++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);
         setPick(null);updatePointMarkers();recompute();
-        searchMsg('출발지와 도착지를 바꿨습니다.');
+        searchMsg('');
       });
       const panel=document.getElementById('route-panel');
       const panelToggle=document.getElementById('panel-toggle');
@@ -337,9 +358,45 @@
       for(const input of [startInput,endInput])input.addEventListener('focus',()=>{if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true)});
       
       let routeCandidates={distance:null,time:null,comfort:null};
-      const routeModeInputs=[...document.querySelectorAll('input[name="route-mode"]')];
-      const selectedModes=()=>routeModeInputs.filter(input=>input.checked).map(input=>input.value);
-      const firstSelectedRoute=()=>selectedModes().map(k=>routeCandidates[k]).find(Boolean)||null;
+      const modeOrder=['distance','time','comfort'];
+      const modeNames={distance:'최단거리',time:'토블러 최소시간',comfort:'경사 부담↓'};
+      const modeColors={distance:'#1689ff',time:'#e68a20',comfort:'#8c4fd3'};
+      const modePriority=['comfort','time','distance'];
+      const routeOptions=document.getElementById('route-view-options');
+      let chosenModes=new Set(['distance','comfort']);
+      let routeGroups=[];
+      const sameRoute=(a,b)=>!!a&&!!b&&a.edgeIds.length===b.edgeIds.length&&a.edgeIds.every((id,i)=>id===b.edgeIds[i]);
+      function buildRouteGroups(){
+        const groups=[];
+        for(const mode of modeOrder){
+          const route=routeCandidates[mode];
+          if(!route)continue;
+          let group=groups.find(g=>sameRoute(routeCandidates[g[0]],route));
+          if(group)group.push(mode);else groups.push([mode]);
+        }
+        // If paths merge or separate, keep a group checked if any of its former modes were checked.
+        routeGroups=groups;
+        routeOptions.replaceChildren();
+        for(const g of groups){
+          const label=document.createElement('label');
+          const check=document.createElement('input');check.type='checkbox';check.value=g.join(',');
+          check.checked=g.some(m=>chosenModes.has(m));
+          const swatch=document.createElement('span');swatch.className='route-key';
+          const rep=modePriority.find(m=>g.includes(m));swatch.style.borderColor=modeColors[rep];
+          const names=document.createElement('span');names.className='route-option-text';names.textContent=g.map(m=>modeNames[m]).join(' · ');
+          label.append(check,swatch,names);routeOptions.appendChild(label);
+          check.addEventListener('change',()=>{
+            for(const m of g){if(check.checked)chosenModes.add(m);else chosenModes.delete(m)}
+            refreshRouteSelection();
+          });
+        }
+      }
+      function selectedModes(){return routeGroups.filter(g=>g.some(m=>chosenModes.has(m))).flat()}
+      function displayRoutes(){
+        return routeGroups.filter(g=>g.some(m=>chosenModes.has(m))).map(g=>modePriority.find(m=>g.includes(m)));
+      }
+      function slopeRouteKind(){return modePriority.find(m=>selectedModes().includes(m))||null}
+      function firstSelectedRoute(){const kind=slopeRouteKind();return kind?routeCandidates[kind]:null}
       const graphUrl=new URL('./data/walk_graph.json',location.href);
       function haversineApprox(a,b){return Math.hypot((a[0]-b[0])*88000,(a[1]-b[1])*111200)}
       function nearestNode(pos){
@@ -431,23 +488,27 @@
         }
       }
       function setLayerVisibility(){
-        const modes=selectedModes();
-        const soleRoute=modes.length===1?routeCandidates[modes[0]]:null;
-        // A slope overlay can only describe one route. With multiple routes, show route colors.
-        slopesBox.disabled=!soleRoute;
-        if(!soleRoute)slopesBox.checked=false;
-        document.getElementById('slopes-caption').textContent=modes.length===1?'(선택한 경로 기준)':'(경로 1개 선택 시)';
-        const showColored=shown && slopesBox.checked && !!soleRoute;
+        const visibleKinds=displayRoutes();
+        const coloredKind=slopeRouteKind();
+        const coloredRoute=coloredKind?routeCandidates[coloredKind]:null;
+        slopesBox.disabled=!coloredRoute;
+        const showColored=shown&&slopesBox.checked&&!!coloredRoute;
+        const captions={comfort:'경사 부담 기준',time:'토블러 기준',distance:'최단거리 기준'};
+        document.getElementById('slopes-caption').textContent=coloredKind?'('+captions[coloredKind]+')':'';
         const kinds=['distance','time','comfort'];
         for(const [index,id] of lineIds.entries())if(map.getLayer(id)){
-          const visible=shown&&!showColored&&modes.includes(kinds[index])&&!!routeCandidates[kinds[index]];
-          map.setLayoutProperty(id,'visibility',visible?'visible':'none');
-          // Parallel offsets keep overlapping routes legible; a single route stays centered.
-          const offset=modes.length===1?0:[-3.5,0,3.5][index];
+          const kind=kinds[index];
+          const isVisible=shown&&visibleKinds.includes(kind)&&!(showColored&&kind===coloredKind);
+          map.setLayoutProperty(id,'visibility',isVisible?'visible':'none');
+          const visibleIndex=visibleKinds.indexOf(kind);
+          const offset=visibleKinds.length<2?0:(visibleIndex-(visibleKinds.length-1)/2)*6;
           map.setPaintProperty(id,'line-offset',offset);
-          map.setPaintProperty(id,'line-opacity',modes.length===1?.95:.88);
+          map.setPaintProperty(id,'line-opacity',.95);
         }
-        if(map.getLayer(slopeLayerId))map.setLayoutProperty(slopeLayerId,'visibility',showColored?'visible':'none');
+        if(map.getLayer(slopeLayerId)){
+          map.setLayoutProperty(slopeLayerId,'visibility',showColored?'visible':'none');
+          map.setPaintProperty(slopeLayerId,'line-offset',visibleKinds.length<2?0:(visibleKinds.indexOf(coloredKind)-(visibleKinds.length-1)/2)*6);
+        }
         slopeLegend.classList.toggle('visible',showColored);
       }
       function refreshRouteSelection(){
@@ -471,17 +532,7 @@
         if(shortest?.missing)warnings.push('최단 경로 일부 고도 미확인: 예상 시간 생략');
         if(!easiest)warnings.push('확인된 고도 구간만으로는 토블러 경로가 연결되지 않습니다');
         if(!comfort)warnings.push('경사 부담 경로를 찾지 못했습니다');
-        // Compare edge identities, not just rounded distances: identical totals do not prove identical routes.
-        const sameRoute=(a,b)=>!!a&&!!b&&a.edgeIds.length===b.edgeIds.length&&a.edgeIds.every((id,i)=>id===b.edgeIds[i]);
-        const timeDiff=sameRoute(shortest,easiest)
-          ? '최단거리와 토블러 경로가 동일합니다.'
-          : shortest&&easiest ? '최단거리와 토블러 경로가 서로 다릅니다.' : '';
-        const comfortDiff=sameRoute(shortest,comfort)
-          ? '최단거리와 경사 부담 경로가 동일합니다.'
-          : shortest&&comfort ? '최단거리와 경사 부담 경로가 서로 다릅니다.' : '';
-        const comparison=`<div class="route-compare-note">${[timeDiff,comfortDiff].filter(Boolean).join('<br>')}</div>`;
-
-        return `<div class="route-grid"><div class="route-metric"><span>🔵 최단거리</span><b>${fmt(shortest)}</b><span>예상 ${time(shortest)}</span></div><div class="route-metric"><span>🟠 토블러 최소시간</span><b>${fmt(easiest)}</b><span>예상 ${time(easiest)}</span></div><div class="route-metric"><span>🟣 경사 부담↓</span><b>${fmt(comfort)}</b><span>토블러 기준 ${time(comfort)}</span></div></div>${comparison}${slopeSummary(slopeStats)}<div class="route-warning">${warnings.join(' / ')}</div><div class="comfort-disclaimer">경사 부담↓은 급경사 오르막·내리막에 추가 가중치를 주는 <b>시험용 모델</b>입니다. 고령자의 실제 이동시간이나 안전을 보증하지 않습니다. 계단 회피는 OSM에 표시된 계단에 한정됩니다.</div>`;
+        return `<div class="route-grid"><div class="route-metric"><span>🔵 최단거리</span><b>${fmt(shortest)}</b><span>예상 ${time(shortest)}</span></div><div class="route-metric"><span>🟠 토블러 최소시간</span><b>${fmt(easiest)}</b><span>예상 ${time(easiest)}</span></div><div class="route-metric"><span>🟣 경사 부담↓</span><b>${fmt(comfort)}</b><span>토블러 기준 ${time(comfort)}</span></div></div>${slopeSummary(slopeStats)}<div class="route-warning">${warnings.join(' / ')}</div>`;
       }
       function updateLayers(features){
         const source=map.getSource(sourceId);
@@ -510,6 +561,7 @@
           const easiest=dijkstra(s.i,t.i,'time',avoid);
           const comfort=dijkstra(s.i,t.i,'comfort',avoid);
           routeCandidates={distance:shortest,time:easiest,comfort};
+          buildRouteGroups();
           const same=shortest && easiest && JSON.stringify(shortest.coords)===JSON.stringify(easiest.coords);
           const features=[];
           if(shortest)features.push({type:'Feature',properties:{kind:'short'},geometry:{type:'LineString',coordinates:shortest.coords}});
@@ -523,24 +575,33 @@
           shown=true;
           refreshRouteSelection();
           if(!shortest&&!easiest&&!comfort){shown=false;setLayerVisibility();routeButton.textContent='현재 선택 지점은 연결되지 않습니다';routeButton.disabled=true;return;}
-          routeButton.disabled=false;shown=true;routeButton.textContent='계산 경로 숨기기';
+          routeButton.disabled=false;shown=true;
           setLayerVisibility();
           const bounds=new maplibregl.LngLatBounds();active.coords.forEach(p=>bounds.extend(p));
           map.fitBounds(bounds,{padding:{top:155,bottom:90,left:Math.min(400,innerWidth*.33),right:55},maxZoom:16,duration:600});
         }catch(err){card.textContent='계산 오류: '+err.message;card.classList.add('visible');console.error(err)}
       }
-      function setPick(mode){pickMode=mode;document.getElementById('pick-start').classList.toggle('picking',mode==='start');document.getElementById('pick-end').classList.toggle('picking',mode==='end');setState(mode?`지도에서 ${mode==='start'?'출발':'도착'} 위치를 클릭해 주세요 (보행망에 가장 가까운 노드 연결)`:'')}
-      document.getElementById('pick-start').onclick=()=>setPick('start');
-      document.getElementById('pick-end').onclick=()=>setPick('end');
-      document.getElementById('reset-points').onclick=()=>{selectedStart=start.slice();selectedEnd=end.slice();startLabel.textContent='새장골경로당';endLabel.textContent='연서시장';startInput.value='새장골경로당';endInput.value='연서시장';++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);setPick(null);updatePointMarkers();recompute()};
-      for(const item of routeModeInputs)item.addEventListener('change',refreshRouteSelection);
+      function setPick(mode){
+        pickMode=mode;
+        document.getElementById('start-field').classList.toggle('is-picking',mode==='start');
+        document.getElementById('end-field').classList.toggle('is-picking',mode==='end');
+        if(!mode)setState('');
+      }
+      for(const [field,input,mode] of [[document.getElementById('start-field'),startInput,'start'],[document.getElementById('end-field'),endInput,'end']]){
+        field.addEventListener('click',()=>{setSearchTarget(mode);setPick(mode);input.focus()});
+      }
       stairsBox.onchange=()=>recompute();
       slopesBox.onchange=()=>setLayerVisibility();
-      routeButton.onclick=()=>{shown=!shown;setLayerVisibility();routeButton.textContent=shown?'계산 경로 숨기기':'계산 경로 표시'};
-      map.on('click',e=>{if(!graph)return;if(!pickMode){const idx=nearestRouteEdge(e.point);if(idx>=0)showSegment(idx);return;}const p=[e.lngLat.lng,e.lngLat.lat],snap=nearestNode(p);
-        if(snap.d>90){setState(`이 지역 도로망에서 ${Math.round(snap.d)}m 떨어져 있습니다. 가까운 도로를 선택해 주세요`,true);return}
-        if(pickMode==='start'){selectedStart=p;startLabel.textContent='지도 선택 위치';startInput.value='지도 선택 위치'}else{selectedEnd=p;endLabel.textContent='지도 선택 위치';endInput.value='지도 선택 위치'}
-        setPick(null);updatePointMarkers();recompute();
+      map.on('click',e=>{
+        if(!graph)return;
+        if(!pickMode){const idx=nearestRouteEdge(e.point);if(idx>=0)showSegment(idx);return}
+        const p=[e.lngLat.lng,e.lngLat.lat],snap=nearestNode(p);
+        if(snap.d>90){setState(`현재 보행 도로망에서 ${Math.round(snap.d)}m 떨어져 있습니다. 가까운 도로를 선택해 주세요`,true);return}
+        const target=pickMode;
+        if(target==='start'){selectedStart=p;startInput.value='지도에서 선택한 위치';startAddress.textContent=`위도 ${p[1].toFixed(5)} · 경도 ${p[0].toFixed(5)}`}
+        else{selectedEnd=p;endInput.value='지도에서 선택한 위치';endAddress.textContent=`위도 ${p[1].toFixed(5)} · 경도 ${p[0].toFixed(5)}`}
+        ++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);searchMsg('');
+        setPick(null);document.activeElement?.blur?.();updatePointMarkers();recompute();
         if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(false);
       });
       async function loadGraph(){
@@ -573,9 +634,18 @@
         updateButtons();
       });
       map.on('error',e=>{console.error(e.error||e);setState('지도 리소스 오류: '+(e.error?.message||'네트워크·지도 서버 확인 필요'),true)});
-      function updateButtons(){document.getElementById('flat').classList.toggle('active',map.getPitch()<10);document.getElementById('tilt').classList.toggle('active',map.getPitch()>=10)}
-      document.getElementById('flat').onclick=()=>{map.easeTo({pitch:0,bearing:0,duration:650});document.getElementById('flat').classList.add('active');document.getElementById('tilt').classList.remove('active')};
-      document.getElementById('tilt').onclick=()=>{map.easeTo({pitch:56,bearing:-18,duration:650});document.getElementById('flat').classList.remove('active');document.getElementById('tilt').classList.add('active')};
+      const viewToggle=document.getElementById('view-toggle');
+      function updateButtons(){
+        const isFlat=map.getPitch()<10;
+        viewToggle.querySelector('span').textContent=isFlat?'2.5D':'2D';
+        viewToggle.setAttribute('aria-label',isFlat?'2.5D 입체 보기로 전환':'2D 평면 보기로 전환');
+        viewToggle.title=isFlat?'2.5D 입체 보기로 전환':'2D 평면 보기로 전환';
+      }
+      viewToggle.addEventListener('click',()=>{
+        const isFlat=map.getPitch()<10;
+        map.easeTo(isFlat?{pitch:56,bearing:-18,duration:650}:{pitch:0,bearing:0,duration:650});
+      });
+      map.on('pitchend',updateButtons);
     }catch(e){setState('지도 생성 실패: '+e.message,true)}
   })();
   </script>
