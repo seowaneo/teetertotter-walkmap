@@ -82,7 +82,7 @@
       <div class="row"><span class="dot start"></span>출발 <span id="start-label">새장골경로당</span> <span style="color:#98a8b7">→</span> 도착 <span id="end-label">연서시장</span></div>
 
       <div class="search-wrap" id="search-wrap">
-        <label for="place-query">장소명 또는 주소 검색</label>
+        <label for="place-query">장소명 우선 검색</label>
         <div class="search-input-row"><input id="place-query" type="text" placeholder="예: 연서시장, 불광동 92-4" autocomplete="off"><button id="place-search" type="button">검색</button></div>
         <div class="search-input-row"><button type="button" id="search-as-start" class="active">출발지로 설정</button><button type="button" id="search-as-end">목적지로 설정</button></div>
         <p class="search-hint">두 글자 이상 입력하면 장소 후보가 표시됩니다. 장소 선택 후 출발·도착을 지정할 수 있어요.</p>
@@ -204,16 +204,50 @@
           placesClient??=new kakao.maps.services.Places();
           geocoderClient??=new kakao.maps.services.Geocoder();
           const status=kakao.maps.services.Status;
-          const results=await Promise.all([
-            searchAsPromise(resolve=>placesClient.keywordSearch(query,(items,s)=>resolve(s===status.OK?items:[]),{size:10})),
+          // Place name outranks a matching street or administrative district.
+          // Fetch the first 15 places; if none have the query in the *name*,
+          // inspect the next page before falling back to address-only matches.
+          const searchPlaces=(page)=>searchAsPromise(resolve=>
+            placesClient.keywordSearch(query,(items,s)=>resolve(s===status.OK?items:[]),{size:15,page})
+          );
+          const [initialPlaces,addressResults]=await Promise.all([
+            searchPlaces(1),
             searchAsPromise(resolve=>geocoderClient.addressSearch(query,(items,s)=>resolve(s===status.OK?items:[])))
           ]);
           if(seq!==searchSeq)return;
+          let placeResults=initialPlaces;
+          const normalizedQuery=query.replace(/\s+/g,'').toLocaleLowerCase('ko');
+          const nameMatches=(p)=>String(p.place_name||'').replace(/\s+/g,'').toLocaleLowerCase('ko').includes(normalizedQuery);
+          if(initialPlaces.length===15&&!initialPlaces.some(nameMatches)){
+            const extra=await searchPlaces(2);
+            if(seq!==searchSeq)return;
+            placeResults=initialPlaces.concat(extra);
+          }
           const normalized=[];
-          for(const p of results[0])normalized.push({name:p.place_name,address:p.road_address_name||p.address_name,lng:Number(p.x),lat:Number(p.y)});
-          for(const p of results[1])normalized.push({name:p.address_name,address:p.address_name,lng:Number(p.x),lat:Number(p.y)});
-          const uniq=new Map();for(const p of normalized)if(Number.isFinite(p.lng)&&Number.isFinite(p.lat))uniq.set(p.name+'|'+p.lng.toFixed(5)+'|'+p.lat.toFixed(5),p);
-          const list=[...uniq.values()].slice(0,12);
+          for(const p of placeResults)normalized.push({name:p.place_name,address:p.road_address_name||p.address_name,lng:Number(p.x),lat:Number(p.y),kind:'place'});
+          for(const p of addressResults)normalized.push({name:p.address_name,address:p.address_name,lng:Number(p.x),lat:Number(p.y),kind:'address'});
+          const uniq=new Map();
+          for(const p of normalized){
+            if(!Number.isFinite(p.lng)||!Number.isFinite(p.lat))continue;
+            const key=p.name+'|'+p.lng.toFixed(5)+'|'+p.lat.toFixed(5);
+            if(!uniq.has(key))uniq.set(key,p);
+          }
+          function rankResult(p){
+            const name=String(p.name||'').replace(/\s+/g,'').toLocaleLowerCase('ko');
+            const address=String(p.address||'').replace(/\s+/g,'').toLocaleLowerCase('ko');
+            // Lower number means higher priority: place names first, then addresses.
+            if(p.kind==='place'&&name===normalizedQuery)return 0;
+            if(p.kind==='place'&&name.startsWith(normalizedQuery))return 1;
+            if(p.kind==='place'&&name.includes(normalizedQuery))return 2;
+            if(p.kind==='place'&&address.includes(normalizedQuery))return 3;
+            if(p.kind==='place')return 4;
+            if(name===normalizedQuery)return 5;
+            if(name.startsWith(normalizedQuery))return 6;
+            return 7;
+          }
+          const list=[...uniq.values()].sort((a,b)=>
+            rankResult(a)-rankResult(b)||a.name.length-b.name.length
+          ).slice(0,12);
           renderSearchResults(list);
           searchMsg(list.length?'목록에서 장소를 눌러 '+(searchTarget==='start'?'출발지':'목적지')+'로 설정하세요.':'검색 결과가 없습니다. 장소명이나 정확한 도로명주소로 다시 검색해 주세요.');
         }catch(err){searchMsg(err.message,true)}finally{searchButton.disabled=false}
