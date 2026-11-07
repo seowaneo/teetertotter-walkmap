@@ -40,18 +40,44 @@
     .search-input-row{display:flex;gap:5px;margin-bottom:8px}
     .search-wrap input[type=text]{width:100%;min-width:0;padding:9px 10px;border-radius:7px;border:1px solid #c9d8e6;background:white;color:#12324f;font-size:12px}
     .search-wrap button{white-space:nowrap;font-size:11px;padding:8px 11px;background:#184e7d;color:white;border:0}
-    .search-key-box{margin-top:3px}.search-key-box p{font-size:10px;color:#647789;margin:3px 0 7px}
+    .search-hint{font-size:10px;line-height:1.5;color:#60778b;margin:0 0 7px}
     .search-results{max-height:170px;overflow-y:auto;display:none;margin:6px 0 4px}
     .search-results.visible{display:block}
     .search-item{display:block;width:100%;background:white!important;color:#1c4265!important;text-align:left;border:1px solid #d6e3ec!important;margin-bottom:4px;white-space:normal!important}
     .search-item strong{display:block;font-size:12px}.search-item small{display:block;font-size:10px;color:#5d7488;margin-top:3px}
     .search-message{font-size:10px;color:#596e81;line-height:1.5;margin-top:5px}
+
+    .panel-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .panel-top h2{margin-bottom:8px}
+    #panel-toggle{display:none}
+    .safety-inline{display:none;font-size:11px;line-height:1.5;color:#865b22;background:#fff8e9;padding:9px;border-radius:8px}
+    @media(max-width:650px){
+      header{height:58px;padding:7px 12px}header h1{font-size:16px}header small{font-size:10px}
+      .main{height:calc(100vh - 58px);height:calc(100dvh - 58px)}
+      .panel{top:auto;bottom:12px;left:10px;right:10px;width:auto;max-width:none;max-height:min(64dvh,570px);padding:12px;border-radius:18px;overflow-y:auto;overscroll-behavior:contain;box-shadow:0 6px 26px #062a4560}
+      .panel.is-collapsed{max-height:70px;overflow:hidden}
+      .panel.is-collapsed #panel-content{display:none}
+      #panel-toggle{display:block;background:#174c7c;color:white;border:0;font-size:12px;padding:9px 12px}
+      .panel-top h2{margin:2px 0 0;font-size:15px}
+      .eyebrow{font-size:9px}
+      #panel-content{padding-top:8px}
+      .modes button{padding:8px}
+      .search-wrap{margin-top:8px}
+      .search-wrap input[type=text]{font-size:16px}
+      .search-results{max-height:180px}
+      .route-card{max-height:none;overflow:visible}
+      .notice{display:none}
+      .safety-inline{display:block}
+      .maplibregl-ctrl-bottom-right{bottom:85px}
+    }
   </style>
 </head>
 <body>
-  <header><div><h1>같은 거리, 다른 걸음 <span style="opacity:.7;font-size:12px">2.5D 실험</span></h1><small>불광2동 · 브라우저 자체 최단거리 · 토블러 경로 계산</small></div><a class="return" href="./">메인으로</a></header>
+  <header><div><h1>같은 거리, 다른 걸음 </h1><small>경사를 고려한 내 걸음에 맞는 길찾기</small></div><a class="return" href="./">메인으로</a></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
-    <section class="panel"><div class="eyebrow">WALK ROUTING / v0.6 · 장소 검색</div><h2>출발·도착을 선택하고 길을 비교하세요</h2>
+    <section class="panel is-collapsed" id="route-panel">
+      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.7</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
+      <div id="panel-content">
       <div class="modes"><button id="flat">2D 평면</button><button id="tilt" class="active">2.5D 입체</button></div>
       <div class="row"><span class="dot start"></span>출발 <span id="start-label">새장골경로당</span> <span style="color:#98a8b7">→</span> 도착 <span id="end-label">연서시장</span></div>
 
@@ -59,7 +85,7 @@
         <label for="place-query">장소명 또는 주소 검색</label>
         <div class="search-input-row"><input id="place-query" type="text" placeholder="예: 연서시장, 불광동 92-4" autocomplete="off"><button id="place-search" type="button">검색</button></div>
         <div class="search-input-row"><button type="button" id="search-as-start" class="active">출발지로 설정</button><button type="button" id="search-as-end">목적지로 설정</button></div>
-        <div class="search-key-box" id="search-key-box"><label for="kakao-js-key">카카오 JavaScript 키 (최초 1회 입력)</label><input type="text" id="kakao-js-key" placeholder="REST API 키가 아닌 JavaScript 키"><p>키는 이 탭에서만 보관하며 GitHub 파일·서버에 저장하지 않습니다. 카카오에 등록된 도메인에서 사용하세요.</p></div>
+        <p class="search-hint">두 글자 이상 입력하면 장소 후보가 표시됩니다. 장소 선택 후 출발·도착을 지정할 수 있어요.</p>
         <div id="search-results" class="search-results" aria-live="polite"></div>
         <div class="search-message" id="search-message">현재는 불광2동 도로망 안에서만 길찾기가 가능합니다. 검색되는 모든 장소가 길찾기 가능한 것은 아닙니다.</div>
       </div>
@@ -71,9 +97,12 @@
       <div id="route-card" class="route-card" aria-live="polite"></div>
       <p class="hint">드래그해 이동하고, Ctrl+드래그(또는 마우스 오른쪽 드래그)로 시점을 바꿀 수 있습니다. 건물 높이는 공개 지도에 존재하는 값만 사용하며, 없는 경우 임의로 보충하지 않습니다.</p>
       <div class="state" id="state">지도 리소스를 불러오는 중...</div>
+      <p class="safety-inline">시험용 데이터로 계산한 경로입니다. 출입구·횡단보도·계단 정보가 불완전할 수 있어 실제 보행 안내로 사용하지 마세요.</p>
+      </div>
     </section>
     <div class="notice">실험용 OSM+보간 DEM 기반 길찾기입니다. 출입구·횡단·계단 누락 가능. 현장 검증 전, 실제 보행 안내로 사용하지 마세요.</div>
   </div>
+  <script src="./config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
   <script>
   (function(){
@@ -113,7 +142,7 @@
       const searchButton=document.getElementById('place-search');
       const searchResults=document.getElementById('search-results');
       const searchMessage=document.getElementById('search-message');
-      const keyInput=document.getElementById('kakao-js-key');
+      const publicJsKey=String(window.TEETERTOTTER_CONFIG?.KAKAO_JS_KEY||'').trim();
       const searchStart=document.getElementById('search-as-start');
       const searchEnd=document.getElementById('search-as-end');
       let searchTarget='start',placesClient=null,geocoderClient=null,loadingSdk=null,searchSeq=0;
@@ -124,8 +153,8 @@
       function attachSearchSdk(){
         if(window.kakao?.maps?.services)return Promise.resolve();
         if(loadingSdk)return loadingSdk;
-        const key=keyInput.value.trim();
-        if(!key)return Promise.reject(new Error('카카오 JavaScript 키를 먼저 입력하세요.'));
+        const key=publicJsKey;
+        if(!key||key==='PASTE_YOUR_KAKAO_JAVASCRIPT_KEY_HERE')return Promise.reject(new Error('관리자가 아직 검색 API를 설정하지 않았습니다. public/config.js를 확인하세요.'));
         loadingSdk=new Promise((resolve,reject)=>{
           const script=document.createElement('script');
           script.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+encodeURIComponent(key)+'&autoload=false&libraries=services';
@@ -159,6 +188,8 @@
             else{selectedEnd=coord;endLabel.textContent=item.name}
             setPick(null);updatePointMarkers();recompute();
             searchResults.classList.remove('visible');
+            searchInput.value=item.name;
+            if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(false);
             searchMsg(item.name+'을(를) '+(searchTarget==='start'?'출발지':'목적지')+'로 설정했습니다. 입구·도보 연결은 현장 확인이 필요합니다.');
           });
           searchResults.appendChild(b);
@@ -188,7 +219,22 @@
         }catch(err){searchMsg(err.message,true)}finally{searchButton.disabled=false}
       }
       searchButton.addEventListener('click',runPlaceSearch);
-      searchInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();runPlaceSearch()}});
+      let suggestTimer=null;
+      searchInput.addEventListener('input',()=>{
+        clearTimeout(suggestTimer);
+        ++searchSeq; // 오래된 검색 결과는 새 입력을 덮어쓰지 못하게 함
+        const q=searchInput.value.trim();
+        if(q.length<2){renderSearchResults([]);searchMsg('장소명 또는 주소를 두 글자 이상 입력하세요.');return}
+        suggestTimer=setTimeout(runPlaceSearch,500);
+      });
+      searchInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();clearTimeout(suggestTimer);runPlaceSearch()} if(e.key==='Escape'){renderSearchResults([]);searchInput.blur()}});
+      const panel=document.getElementById('route-panel');
+      const panelToggle=document.getElementById('panel-toggle');
+      function setPanelOpen(open){panel.classList.toggle('is-collapsed',!open);panelToggle.setAttribute('aria-expanded',String(open));panelToggle.textContent=open?'접기 ▾':'검색 · 길찾기 열기 ▴';setTimeout(()=>map.resize(),150)}
+      panelToggle.addEventListener('click',()=>setPanelOpen(panel.classList.contains('is-collapsed')));
+      if(!window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true);
+      searchInput.addEventListener('focus',()=>{if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true)});
+      
       const graphUrl=new URL('./data/walk_graph.json',location.href);
       function haversineApprox(a,b){return Math.hypot((a[0]-b[0])*88000,(a[1]-b[1])*111200)}
       function nearestNode(pos){
