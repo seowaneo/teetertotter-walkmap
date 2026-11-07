@@ -38,6 +38,17 @@
     .search-wrap{margin-top:11px;border:1px solid #d8e5f0;background:#f7fafe;padding:10px;border-radius:11px}
     .search-wrap label{font-size:11px;color:#385772;font-weight:750;display:block;margin-bottom:4px}
     .search-input-row{display:flex;gap:5px;margin-bottom:8px}
+    .location-field{display:flex;align-items:center;gap:9px;padding:8px 10px;background:#fff;border:1px solid #c9d8e6;border-radius:10px;margin-bottom:7px}
+    .location-field:focus-within{border-color:#2e82c7;box-shadow:0 0 0 2px #dcebfc}
+    .location-field .field-dot{width:10px;height:10px;flex:none;border-radius:50%;background:#008e78}
+    .location-field.destination .field-dot{background:#e36d42}
+    .location-field label{display:block;margin:0 0 3px;font-size:10px}
+    .location-field input[type=text]{border:0;padding:3px 0;border-radius:0;box-shadow:none;outline:none;font-size:14px}
+    .location-field input[type=text]:focus{outline:0}
+    .location-fields{position:relative;padding-right:36px}
+    .swap-points{position:absolute;right:0;top:50%;transform:translateY(-50%);width:31px;height:36px;padding:0!important;border-radius:8px!important;background:#e7f0f8!important;color:#174c7c!important}
+    .search-wrap .search-hint{margin-top:5px}
+    .search-item:focus-visible{outline:2px solid #126caf}
     .search-wrap input[type=text]{width:100%;min-width:0;padding:9px 10px;border-radius:7px;border:1px solid #c9d8e6;background:white;color:#12324f;font-size:12px}
     .search-wrap button{white-space:nowrap;font-size:11px;padding:8px 11px;background:#184e7d;color:white;border:0}
     .search-hint{font-size:10px;line-height:1.5;color:#60778b;margin:0 0 7px}
@@ -76,16 +87,18 @@
   <header><div><h1>같은 거리, 다른 걸음 </h1><small>경사를 고려한 내 걸음에 맞는 길찾기</small></div><a class="return" href="./">메인으로</a></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
     <section class="panel is-collapsed" id="route-panel">
-      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.7</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
+      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.7.3</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
       <div id="panel-content">
       <div class="modes"><button id="flat">2D 평면</button><button id="tilt" class="active">2.5D 입체</button></div>
       <div class="row"><span class="dot start"></span>출발 <span id="start-label">새장골경로당</span> <span style="color:#98a8b7">→</span> 도착 <span id="end-label">연서시장</span></div>
 
       <div class="search-wrap" id="search-wrap">
-        <label for="place-query">장소명 우선 검색</label>
-        <div class="search-input-row"><input id="place-query" type="text" placeholder="예: 연서시장, 불광동 92-4" autocomplete="off"><button id="place-search" type="button">검색</button></div>
-        <div class="search-input-row"><button type="button" id="search-as-start" class="active">출발지로 설정</button><button type="button" id="search-as-end">목적지로 설정</button></div>
-        <p class="search-hint">입력 중 장소 후보가 자동으로 나타납니다. 결과를 누르면 출발·도착을 지정할 수 있어요.</p>
+        <div class="location-fields">
+          <div class="location-field origin"><span class="field-dot" aria-hidden="true"></span><div style="flex:1;min-width:0"><label for="start-query">출발지</label><input id="start-query" type="text" value="새장골경로당" placeholder="출발지를 검색하세요" autocomplete="off" aria-controls="search-results" aria-expanded="false"></div></div>
+          <div class="location-field destination"><span class="field-dot" aria-hidden="true"></span><div style="flex:1;min-width:0"><label for="end-query">도착지</label><input id="end-query" type="text" value="연서시장" placeholder="도착지를 검색하세요" autocomplete="off" aria-controls="search-results" aria-expanded="false"></div></div>
+          <button type="button" id="swap-points" class="swap-points" aria-label="출발지와 도착지 바꾸기" title="출발지와 도착지 바꾸기">⇅</button>
+        </div>
+        <p class="search-hint">각 입력칸에 장소명이나 주소를 입력하면 후보가 나타납니다. 결과를 누르면 해당 지점으로 바로 설정됩니다.</p>
         <div id="search-results" class="search-results" aria-live="polite"></div>
         <div class="search-message" id="search-message">현재는 불광2동 도로망 안에서만 길찾기가 가능합니다. 검색되는 모든 장소가 길찾기 가능한 것은 아닙니다.</div>
       </div>
@@ -138,17 +151,17 @@
 
       // v0.6 Places/address search. Uses the browser Kakao Maps JavaScript services library,
       // not a REST/admin key. Results are transient; never saved as a place database.
-      const searchInput=document.getElementById('place-query');
-      const searchButton=document.getElementById('place-search');
+      const startInput=document.getElementById('start-query');
+      const endInput=document.getElementById('end-query');
       const searchResults=document.getElementById('search-results');
       const searchMessage=document.getElementById('search-message');
       const publicJsKey=String(window.TEETERTOTTER_CONFIG?.KAKAO_JS_KEY||'').trim();
-      const searchStart=document.getElementById('search-as-start');
-      const searchEnd=document.getElementById('search-as-end');
       let searchTarget='start',placesClient=null,geocoderClient=null,loadingSdk=null,searchSeq=0;
-      function setSearchTarget(t){searchTarget=t;searchStart.classList.toggle('active',t==='start');searchEnd.classList.toggle('active',t==='end')}
-      searchStart.addEventListener('click',()=>setSearchTarget('start'));
-      searchEnd.addEventListener('click',()=>setSearchTarget('end'));
+      let searchInput=startInput;
+      function setSearchTarget(t){
+        if(searchTarget!==t){++searchSeq;clearTimeout(suggestTimer);renderSearchResults([])}
+        searchTarget=t;searchInput=t==='start'?startInput:endInput;
+      }
       function searchMsg(text,bad=false){searchMessage.textContent=text;searchMessage.style.color=bad?'#af4534':'#596e81'}
       function attachSearchSdk(){
         if(window.kakao?.maps?.services)return Promise.resolve();
@@ -172,6 +185,8 @@
       function renderSearchResults(items){
         searchResults.replaceChildren();
         searchResults.classList.toggle('visible',items.length>0);
+        startInput.setAttribute('aria-expanded',String(items.length>0&&searchTarget==='start'));
+        endInput.setAttribute('aria-expanded',String(items.length>0&&searchTarget==='end'));
         for(const item of items){
           const b=document.createElement('button');b.type='button';b.className='search-item';
           const strong=document.createElement('strong');strong.textContent=item.name;
@@ -188,7 +203,7 @@
             else{selectedEnd=coord;endLabel.textContent=item.name}
             setPick(null);updatePointMarkers();recompute();
             searchResults.classList.remove('visible');
-            searchInput.value=item.name;
+            (searchTarget==='start'?startInput:endInput).value=item.name;
             if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(false);
             searchMsg(item.name+'을(를) '+(searchTarget==='start'?'출발지':'목적지')+'로 설정했습니다. 입구·도보 연결은 현장 확인이 필요합니다.');
           });
@@ -198,7 +213,7 @@
       async function runPlaceSearch(){
         const seq=++searchSeq,query=searchInput.value.trim();
         if(!query){renderSearchResults([]);searchMsg('장소 이름이나 주소를 입력해 주세요.');return}
-        searchButton.disabled=true;searchMsg('장소와 주소를 검색하는 중…');renderSearchResults([]);
+        searchMsg('장소와 주소를 검색하는 중…');renderSearchResults([]);
         try{
           await attachSearchSdk();
           placesClient??=new kakao.maps.services.Places();
@@ -249,8 +264,8 @@
             rankResult(a)-rankResult(b)||a.name.length-b.name.length
           ).slice(0,12);
           renderSearchResults(list);
-          searchMsg(list.length?'목록에서 장소를 눌러 '+(searchTarget==='start'?'출발지':'목적지')+'로 설정하세요.':'검색 결과가 없습니다. 장소명이나 정확한 도로명주소로 다시 검색해 주세요.');
-        }catch(err){if(seq===searchSeq)searchMsg(err.message,true)}finally{if(seq===searchSeq)searchButton.disabled=false}
+          searchMsg(list.length?'추천 장소를 누르면 '+(searchTarget==='start'?'출발지':'도착지')+'가 바로 설정됩니다.':'검색 결과가 없습니다. 장소명이나 정확한 도로명주소로 다시 검색해 주세요.');
+        }catch(err){if(seq===searchSeq)searchMsg(err.message,true)}
       }
       // Automatically fetch suggestions as the user types (no search click required).
       // A short debounce minimizes duplicate Kakao API requests during typing.
@@ -258,26 +273,37 @@
       const scheduleSuggestions=()=>{
         clearTimeout(suggestTimer);
         ++searchSeq; // Reject results from an older query.
-        searchButton.disabled=false;
+        
         const q=searchInput.value.trim();
         if(!q){renderSearchResults([]);searchMsg('장소 이름이나 주소를 입력해 주세요.');return}
         renderSearchResults([]);
         searchMsg('관련 장소를 찾는 중…');
         suggestTimer=setTimeout(()=>{suggestTimer=null;runPlaceSearch()},220);
       };
-      searchInput.addEventListener('input',scheduleSuggestions);
-      // Enter remains available for immediate manual search.
-      searchButton.addEventListener('click',()=>{clearTimeout(suggestTimer);runPlaceSearch()});
-      searchInput.addEventListener('keydown',e=>{
-        if(e.key==='Enter'&&!e.isComposing){e.preventDefault();clearTimeout(suggestTimer);runPlaceSearch()}
-        if(e.key==='Escape'){clearTimeout(suggestTimer);renderSearchResults([]);searchInput.blur()}
+      for(const [target,input] of [['start',startInput],['end',endInput]]){
+        input.addEventListener('focus',()=>{setSearchTarget(target);if(input.value.trim())scheduleSuggestions();});
+        input.addEventListener('input',()=>{setSearchTarget(target);scheduleSuggestions();});
+        input.addEventListener('keydown',e=>{
+          if(e.key==='Enter'&&!e.isComposing){e.preventDefault();setSearchTarget(target);clearTimeout(suggestTimer);runPlaceSearch()}
+          if(e.key==='Escape'){clearTimeout(suggestTimer);renderSearchResults([]);input.blur()}
+        });
+      }
+      document.getElementById('swap-points').addEventListener('click',()=>{
+        const oldStart=selectedStart.slice(),oldEnd=selectedEnd.slice();
+        selectedStart=oldEnd;selectedEnd=oldStart;
+        const sl=startLabel.textContent,el=endLabel.textContent;
+        startLabel.textContent=el;endLabel.textContent=sl;
+        startInput.value=el;endInput.value=sl;
+        ++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);
+        setPick(null);updatePointMarkers();recompute();
+        searchMsg('출발지와 도착지를 바꿨습니다.');
       });
       const panel=document.getElementById('route-panel');
       const panelToggle=document.getElementById('panel-toggle');
       function setPanelOpen(open){panel.classList.toggle('is-collapsed',!open);panelToggle.setAttribute('aria-expanded',String(open));panelToggle.textContent=open?'접기 ▾':'검색 · 길찾기 열기 ▴';setTimeout(()=>map.resize(),150)}
       panelToggle.addEventListener('click',()=>setPanelOpen(panel.classList.contains('is-collapsed')));
       if(!window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true);
-      searchInput.addEventListener('focus',()=>{if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true)});
+      for(const input of [startInput,endInput])input.addEventListener('focus',()=>{if(window.matchMedia('(max-width: 650px)').matches)setPanelOpen(true)});
       
       const graphUrl=new URL('./data/walk_graph.json',location.href);
       function haversineApprox(a,b){return Math.hypot((a[0]-b[0])*88000,(a[1]-b[1])*111200)}
@@ -417,13 +443,13 @@
       function setPick(mode){pickMode=mode;document.getElementById('pick-start').classList.toggle('picking',mode==='start');document.getElementById('pick-end').classList.toggle('picking',mode==='end');setState(mode?`지도에서 ${mode==='start'?'출발':'도착'} 위치를 클릭해 주세요 (보행망에 가장 가까운 노드 연결)`:'계산 준비 완료')}
       document.getElementById('pick-start').onclick=()=>setPick('start');
       document.getElementById('pick-end').onclick=()=>setPick('end');
-      document.getElementById('reset-points').onclick=()=>{selectedStart=start.slice();selectedEnd=end.slice();startLabel.textContent='새장골경로당';endLabel.textContent='연서시장';setPick(null);updatePointMarkers();recompute()};
+      document.getElementById('reset-points').onclick=()=>{selectedStart=start.slice();selectedEnd=end.slice();startLabel.textContent='새장골경로당';endLabel.textContent='연서시장';startInput.value='새장골경로당';endInput.value='연서시장';++searchSeq;clearTimeout(suggestTimer);renderSearchResults([]);setPick(null);updatePointMarkers();recompute()};
       stairsBox.onchange=()=>recompute();
       slopesBox.onchange=()=>setLayerVisibility();
       routeButton.onclick=()=>{shown=!shown;setLayerVisibility();routeButton.textContent=shown?'계산 경로 숨기기':'계산 경로 표시'};
       map.on('click',e=>{if(!pickMode||!graph)return;const p=[e.lngLat.lng,e.lngLat.lat],snap=nearestNode(p);
         if(snap.d>90){setState(`이 지역 도로망에서 ${Math.round(snap.d)}m 떨어져 있습니다. 가까운 도로를 선택해 주세요`,true);return}
-        if(pickMode==='start'){selectedStart=p;startLabel.textContent='지도 선택 위치'}else{selectedEnd=p;endLabel.textContent='지도 선택 위치'}
+        if(pickMode==='start'){selectedStart=p;startLabel.textContent='지도 선택 위치';startInput.value='지도 선택 위치'}else{selectedEnd=p;endLabel.textContent='지도 선택 위치';endInput.value='지도 선택 위치'}
         setPick(null);updatePointMarkers();recompute();
       });
       async function loadGraph(){
