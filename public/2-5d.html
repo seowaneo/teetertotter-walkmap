@@ -272,7 +272,7 @@
   <header><div><h1>같은 거리, 다른 걸음 </h1><small>경사를 고려한 내 걸음에 맞는 길찾기</small></div></header>
   <div class="main"><div id="map" role="application" aria-label="불광2동 2.5D 실험 지도"></div>
     <section class="panel is-collapsed" id="route-panel">
-      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9.6</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
+      <div class="panel-top"><div><div class="eyebrow">TEETERTOTTER / v0.9.8</div><h2>어디로 가시나요?</h2></div><button id="panel-toggle" type="button" aria-expanded="false" aria-controls="panel-content">검색 · 길찾기 열기 ▴</button></div>
       <div id="panel-content">
       <div class="search-wrap" id="search-wrap">
         <div class="location-fields">
@@ -290,7 +290,7 @@
         <div class="route-view-options" id="route-view-options"></div>
       </div>
       <button class="route-btn" id="show-route" hidden disabled>보행 도로망 불러오는 중…</button>
-      <label class="check" style="margin-top:9px;font-size:12px"><input type="checkbox" id="show-slopes" disabled> <b>오르막·내리막 색상 표시</b> <small id="slopes-caption" style="color:#70859b">(우선순위: 경사 부담 → 토블러 → 최단거리)</small></label>
+      <input type="checkbox" id="show-slopes" checked hidden><span id="slopes-caption" hidden></span>
       <div class="slope-legend" id="slope-legend"><div class="slope-key"><i class="swatch" style="background:#d96d30"></i><span>오르막 ▲</span><i class="swatch" style="background:#279b7c"></i><span>내리막 ▼</span><i class="swatch" style="background:#8797a7"></i><span>완만한 길 —</span><i class="swatch" style="background:#a7a4a0"></i><span>경사 미확인 ?</span></div><div class="slope-tip">현재 이동 방향 기준 · ±3% 분류 · 시험용 10m DEM에서 직접 보간한 경사입니다. 현장 검증 전입니다.</div></div>
       <div id="route-card" class="route-card" aria-live="polite"></div><div id="segment-info" class="route-card" aria-live="polite" style="display:none"></div>
       <div class="state" id="state" role="status" aria-live="polite"></div>
@@ -301,20 +301,20 @@
     <nav class="mobile-mode-tabs" id="mobile-mode-tabs" aria-label="경로별 길찾기 결과">
       <button type="button" data-mode="distance" aria-pressed="false"><span>최단거리</span><b>—</b></button>
       <button type="button" data-mode="time" aria-pressed="false"><span>토블러</span><b>—</b></button>
-      <button type="button" data-mode="comfort" aria-pressed="true"><span>경사 부담</span><b>—</b></button>
+      <button type="button" data-mode="comfort" aria-pressed="true"><span>경사 맞춤</span><b>—</b></button>
     </nav>
     <section class="mobile-route-sheet" id="mobile-route-sheet" aria-label="모바일 경로 비교">
       <div class="sheet-handle" aria-hidden="true"></div>
       <div class="sheet-head"><strong id="mobile-route-summary">경로를 선택해 주세요</strong><button type="button" id="mobile-expand" aria-expanded="false">상세 보기 ▴</button></div>
       <div id="mobile-route-cards" class="mobile-route-cards" aria-live="polite"></div>
-      <div class="mobile-actions"><button type="button" id="mobile-my-location">◎ 내 위치</button><button type="button" id="mobile-slope-toggle">경사 색상 켜기</button><button type="button" id="mobile-prefs-toggle">길 취향 ⚙</button><button type="button" id="mobile-rest-toggle">쉼터 찾기</button></div>
-      <div class="mobile-prefs" id="mobile-prefs">
+      <div class="mobile-actions"><button type="button" id="mobile-my-location">◎ 내 위치</button><button type="button" id="mobile-prefs-toggle">경사 맞춤 ⚙</button><button type="button" id="mobile-rest-toggle">내 쉼터</button></div>
+      <div class="mobile-prefs" id="mobile-prefs"><h3 style="font-size:14px;margin:0 0 10px">경사 맞춤 설정</h3>
         <div class="pref-row"><strong>오르막 부담</strong><div class="pref-options" id="pref-up"><button data-level="low">괜찮아요</button><button data-level="medium" class="active">보통</button><button data-level="high">피하고 싶어요</button></div></div>
         <div class="pref-row"><strong>내리막 부담</strong><div class="pref-options" id="pref-down"><button data-level="low">괜찮아요</button><button data-level="medium" class="active">보통</button><button data-level="high">피하고 싶어요</button></div></div>
         <label class="pref-check"><input type="checkbox" id="mobile-avoid-stairs"> OSM에 표시된 계단 제외</label>
-        <p class="pref-note">선호도는 경사 부담 경로 계산에만 적용됩니다. 실제 보행 안전성은 검증 전입니다.</p>
+        <p class="pref-note">경사 맞춤 경로에 적용 · 추정 경사 기반</p>
       </div>
-      <div class="mobile-rest" id="mobile-rest"><h3>쉬어갈 수 있는 길</h3><p id="mobile-rest-status">경로 주변에 지도에 등록된 벤치·쉼터를 찾아봅니다. 시설 상태와 실제 이용 가능 여부는 확인되지 않았습니다.</p><div class="mobile-rest-list" id="mobile-rest-list"></div><button type="button" class="mobile-rest-close" id="mobile-rest-reset" hidden>쉼터 경유 취소</button></div><div class="mobile-detail" id="mobile-detail"><h3>경로 고도 변화</h3><div class="mobile-profile" id="mobile-profile"></div><div class="mobile-detail-metrics" id="mobile-detail-metrics"></div><p class="mobile-status">10m 보간 DEM에서 추정한 고도입니다. 실제 도로 경사는 다를 수 있습니다.</p></div>
+      <div class="mobile-rest" id="mobile-rest"><h3>내 쉼터 · 쉬어갈 수 있는 길</h3><p id="mobile-rest-status">지도에서 실제로 확인한 벤치·쉼터 위치를 저장하세요. 등록한 곳은 이 기기에 저장됩니다.</p><button type="button" id="rest-add" class="rest-add">＋ 지도에서 쉼터 위치 지정</button><div class="mobile-rest-list" id="mobile-rest-list"></div><button type="button" class="mobile-rest-close" id="mobile-rest-reset" hidden>쉼터 경유 취소</button></div><div class="mobile-detail" id="mobile-detail"><h3>경로 고도 변화</h3><div class="mobile-profile" id="mobile-profile"></div><div class="mobile-detail-metrics" id="mobile-detail-metrics"></div><p class="mobile-status">10m 보간 DEM에서 추정한 고도입니다. 실제 도로 경사는 다를 수 있습니다.</p></div>
     </section>
     <div id="location-feedback" class="location-feedback" role="alert"><button type="button" id="location-feedback-close" aria-label="알림 닫기">×</button><span id="location-feedback-text"></span></div>
     <button type="button" id="view-toggle" class="view-toggle" aria-label="2D 평면 보기로 전환" title="2D 평면 보기로 전환">▱<span>2D</span></button>
@@ -511,7 +511,7 @@
       
       let routeCandidates={distance:null,time:null,comfort:null};
       const modeOrder=['distance','time','comfort'];
-      const modeNames={distance:'최단거리',time:'토블러 최소시간',comfort:'경사 부담↓'};
+      const modeNames={distance:'최단거리',time:'토블러 최소시간',comfort:'경사 맞춤'};
       const modeColors={distance:'#1689ff',time:'#e68a20',comfort:'#8c4fd3'};
       const modePriority=['comfort','time','distance'];
       const routeOptions=document.getElementById('route-view-options');
@@ -644,8 +644,8 @@
         const visibleKinds=displayRoutes();
         const coloredKind=slopeRouteKind();
         const coloredRoute=coloredKind?routeCandidates[coloredKind]:null;
-        slopesBox.disabled=!coloredRoute;
-        const showColored=shown&&slopesBox.checked&&!!coloredRoute;
+        slopesBox.disabled=false;slopesBox.checked=true;
+        const showColored=shown&&!!coloredRoute;
         const captions={comfort:'경사 부담 기준',time:'토블러 기준',distance:'최단거리 기준'};
         document.getElementById('slopes-caption').textContent=coloredKind?'('+captions[coloredKind]+')':'';
         const kinds=['distance','time','comfort'];
@@ -672,7 +672,7 @@
       const mobileMetrics=document.getElementById('mobile-detail-metrics');
       const mobileExpand=document.getElementById('mobile-expand');
       const mobilePrefs=document.getElementById('mobile-prefs');
-      const mobileSlope=document.getElementById('mobile-slope-toggle');
+
       let detailMode='comfort';
       const escapeText=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       function routeProfile(route){
@@ -722,13 +722,17 @@
         const mobileSummary=document.getElementById('mobile-route-summary');
         const focusRoute=routeCandidates[detailMode] || routeCandidates[mode];
         mobileSummary.textContent=focusRoute ? `${modeNames[detailMode]} · ${Math.round(focusRoute.meters).toLocaleString('ko-KR')}m` : '선택한 경로 없음';
+        const up=document.querySelector('#pref-up button.active')?.textContent||'보통';
+        const down=document.querySelector('#pref-down button.active')?.textContent||'보통';
+        if(detailMode==='comfort')mobileSummary.textContent=`경사 맞춤 · 오르막 ${up} / 내리막 ${down} · ${Math.round(focusRoute?.meters||0).toLocaleString('ko-KR')}m`;
+        document.getElementById('mobile-prefs-toggle').classList.toggle('primary',detailMode==='comfort');
         document.querySelectorAll('#mobile-mode-tabs button').forEach(tab=>{
           const kind=tab.dataset.mode, r=routeCandidates[kind];
           tab.disabled=!r;
           tab.querySelector('b').textContent=r && r.missing===0 ? `${Math.round(r.minutes)}분` : '—';
           tab.setAttribute('aria-pressed',String(kind===detailMode));
         });
-        mobileSlope.textContent=slopesBox.checked?'경사 색상 끄기':'경사 색상 켜기';
+
       }
       document.querySelectorAll('#mobile-mode-tabs button').forEach(tab=>tab.addEventListener('click',()=>{
         const kind=tab.dataset.mode;if(!routeCandidates[kind])return;
@@ -749,16 +753,20 @@
         if(open){mobileSheet.classList.remove('expanded');mobileExpand.textContent='상세 보기 ▴';mobileExpand.setAttribute('aria-expanded','false')}
         map.resize();
       });
-      // Rest places: opt-in, bounded OpenStreetMap Overpass lookup, not a verified accessibility dataset.
+      // Locally confirmed rest points: no third-party Overpass dependency.
+      // The saved records are user-confirmed positions, not verified municipal facilities.
       const restPanel=document.getElementById('mobile-rest');
       const restList=document.getElementById('mobile-rest-list');
       const restStatus=document.getElementById('mobile-rest-status');
       const restReset=document.getElementById('mobile-rest-reset');
       const restButton=document.getElementById('mobile-rest-toggle');
-      let restMarkers=[],restRoute=null,restPlaces=[];
+      const restAdd=document.getElementById('rest-add');
+      const restStorageKey='teetertotter-rest-points-v1';
+      let restMarkers=[],restRoute=null,restPlaces=[],restPick=false;
       const restSourceId='teetertotter-rest-detour';
+      try{const saved=JSON.parse(localStorage.getItem(restStorageKey)||'[]');if(Array.isArray(saved))restPlaces=saved.filter(p=>Array.isArray(p.coords)&&p.coords.length===2&&p.coords.every(Number.isFinite)).slice(0,100)}catch(e){console.warn('Could not read saved places',e)}
+      function persistRestPlaces(){try{localStorage.setItem(restStorageKey,JSON.stringify(restPlaces))}catch(e){restStatus.textContent='브라우저 저장이 제한되어 쉼터가 다음 방문에 남지 않을 수 있습니다.'}}
       function clearRestVisual(){
-        for(const m of restMarkers)m.remove();restMarkers=[];
         if(map.getSource(restSourceId))map.getSource(restSourceId).setData({type:'FeatureCollection',features:[]});
         restRoute=null;restReset.hidden=true;
       }
@@ -774,55 +782,37 @@
         return Math.hypot(x-ax-t*dx,y-ay-t*dy);
       }
       function routeDistanceTo(p,coords){let best=Infinity;for(let i=1;i<coords.length;i++)best=Math.min(best,distancePointSegment(p,coords[i-1],coords[i]));return best}
+      function renderRestPlaces(){
+        restMarkers.forEach(marker=>marker.remove());restMarkers=[];restList.replaceChildren();
+        const route=routeCandidates[detailMode]||firstSelectedRoute();
+        const nearby=restPlaces.map(p=>({...p,distance:route?.coords?.length>1?routeDistanceTo(p.coords,route.coords):Infinity})).filter(p=>p.distance<=300).sort((a,b)=>a.distance-b.distance);
+        restStatus.textContent=restPick?'지도에서 쉼터 위치를 한 번 누르세요.':nearby.length?`경로에서 300m 이내에 직접 등록한 쉼터 ${nearby.length}곳`:'경로 주변에 등록된 쉼터가 없습니다. 실제 위치를 알고 계시면 지도에서 등록해 주세요.';
+        for(const place of nearby){
+          const el=document.createElement('div');el.style.cssText='width:17px;height:17px;background:#13835d;border:2px solid white;border-radius:50%;box-shadow:0 1px 6px #153d2b66';
+          restMarkers.push(new maplibregl.Marker({element:el}).setLngLat(place.coords).setPopup(new maplibregl.Popup().setText(place.name)).addTo(map));
+          const wrapper=document.createElement('div');wrapper.className='rest-item';
+          const choose=document.createElement('button');choose.type='button';choose.textContent=place.name;
+          const small=document.createElement('small');small.textContent=`기록 위치 · 경로에서 약 ${Math.round(place.distance)}m`;choose.append(small);choose.addEventListener('click',()=>selectRestStop(place));
+          const del=document.createElement('button');del.type='button';del.className='rest-delete';del.textContent='삭제';del.setAttribute('aria-label',place.name+' 삭제');del.onclick=()=>{restPlaces=restPlaces.filter(p=>p.id!==place.id);persistRestPlaces();clearRestVisual();renderRestPlaces()};
+          wrapper.append(choose,del);restList.append(wrapper);
+        }
+      }
       function toggleRestPanel(){
         const on=!mobileSheet.classList.contains('rest-open');
         mobileSheet.classList.toggle('rest-open',on);
         mobileSheet.classList.remove('expanded','prefs-open');mobilePrefs.classList.remove('open');
         mobileExpand.textContent='상세 보기 ▴';mobileExpand.setAttribute('aria-expanded','false');
-        if(on && !restPlaces.length)loadRestPlaces();
-        map.resize();
+        if(!on){restPick=false;restAdd.classList.remove('active');restAdd.textContent='＋ 지도에서 쉼터 위치 지정'}
+        if(on)renderRestPlaces();map.resize();
       }
       restButton.addEventListener('click',toggleRestPanel);
-      async function loadRestPlaces(){
-        const r=routeCandidates[detailMode]||firstSelectedRoute();
-        if(!r||!r.coords||r.coords.length<2){restStatus.textContent='먼저 길찾기 경로를 선택해 주세요.';return}
-        restStatus.textContent='경로 주변의 벤치·쉼터를 찾는 중…';restList.replaceChildren();
-        restButton.disabled=true;
-        const arr=r.coords,lon=arr.map(p=>p[0]),lat=arr.map(p=>p[1]);
-        const bbox=[Math.min(...lat)-.002,Math.min(...lon)-.0025,Math.max(...lat)+.002,Math.max(...lon)+.0025];
-        const q=`[out:json][timeout:15];(node[amenity=bench](${bbox.join(',')});node[amenity=shelter](${bbox.join(',')});node[shelter_type=public_transport](${bbox.join(',')}););out center 500;`;
-        try{
-          // Public Overpass instances are best-effort; retry on a separate provider.
-          // No synthetic facility coordinates are ever generated.
-          const endpoints=['https://overpass.kumi.systems/api/interpreter','https://overpass.nchc.org.tw/api/interpreter','https://overpass-api.de/api/interpreter'];
-          let data=null,lastFetchError=null;
-          for(const endpoint of endpoints){
-            try{
-              const controller=new AbortController();
-              const timer=setTimeout(()=>controller.abort(),11000);
-              try{
-                const response=await fetch(endpoint+'?data='+encodeURIComponent(q),{method:'GET',signal:controller.signal,headers:{'Accept':'application/json'}});
-                if(!response.ok)throw new Error('조회 서버 HTTP '+response.status);
-                const result=await response.json();
-                if(!Array.isArray(result.elements))throw new Error('올바르지 않은 응답');
-                data=result;break;
-              }finally{clearTimeout(timer)}
-            }catch(error){lastFetchError=error}
-          }
-          if(!data)throw lastFetchError||new Error('조회 서버 접속 실패');
-          restPlaces=(data.elements||[]).filter(e=>Number.isFinite(e.lon)&&Number.isFinite(e.lat)).map(e=>({id:e.id,coords:[e.lon,e.lat],type:e.tags?.amenity==='bench'?'벤치':'쉼터',name:e.tags?.name||'',distance:routeDistanceTo([e.lon,e.lat],arr)})).filter(p=>p.distance<=130).sort((a,b)=>a.distance-b.distance).slice(0,12);
-          if(!restPlaces.length){restStatus.textContent='선택한 경로 130m 이내에 등록된 벤치·쉼터를 찾지 못했습니다. 실제로 없다는 뜻은 아닙니다.';return}
-          restStatus.textContent=`지도에 등록된 쉼터 ${restPlaces.length}곳을 찾았습니다. 목록을 선택하면 경유 경로를 시험 계산합니다. 실제 벤치 상태·출입 가능 여부는 미확인입니다.`;
-          for(const place of restPlaces){
-            const el=document.createElement('div');el.style.cssText='width:17px;height:17px;background:#13835d;border:2px solid white;border-radius:50%;box-shadow:0 1px 6px #153d2b66';
-            restMarkers.push(new maplibregl.Marker({element:el}).setLngLat(place.coords).setPopup(new maplibregl.Popup().setText(place.name||place.type)).addTo(map));
-            const btn=document.createElement('button');btn.type='button';btn.textContent=place.name?`${place.name} · ${place.type}`:place.type;
-            const small=document.createElement('small');small.textContent=`선택한 경로에서 약 ${Math.round(place.distance)}m · OSM 등록 정보`;btn.appendChild(small);
-            btn.addEventListener('click',()=>selectRestStop(place));restList.appendChild(btn);
-          }
-        }catch(e){restStatus.textContent='쉼터 정보를 가져오지 못했습니다. 공개 OSM 조회 서버가 응답하지 않았습니다. 잠시 후 재시도하거나 현장 조사로 확인된 시설만 이용해 주세요.';restList.replaceChildren();const btn=document.createElement('button');btn.textContent='다시 찾기';btn.onclick=loadRestPlaces;restList.appendChild(btn)}
-        finally{restButton.disabled=false}
-      }
+      restAdd.addEventListener('click',()=>{
+        restPick=!restPick;restAdd.classList.toggle('active',restPick);
+        restAdd.textContent=restPick?'취소 · 지도를 눌러 지정':'＋ 지도에서 쉼터 위치 지정';
+        if(restPick){setPick(null);mobileSheet.classList.remove('rest-open');restStatus.textContent='지도에서 실제 쉼터 위치를 선택하세요.'}
+        else{mobileSheet.classList.add('rest-open');renderRestPlaces()}
+        map.resize();
+      });
       function selectRestStop(place){
         if(!graph)return;
         const s=nearestNode(selectedStart),t=nearestNode(selectedEnd),w=nearestNode(place.coords);
@@ -863,9 +853,6 @@
           btn.disabled=false;btn.textContent='◎ 내 위치';searchMsg('');
         },err=>fail(err.code===1?'위치 권한이 거부되었습니다. iPhone 설정 → 개인정보 보호 및 보안 → 위치 서비스 → Safari 웹 사이트를 확인하고, Safari의 이 사이트 설정에서 위치 접근을 허용해 주세요.':err.code===2?'기기에서 위치를 확인하지 못했습니다. 위치 서비스·Wi-Fi·셀룰러를 확인해 주세요.':'위치 확인 시간이 초과됐습니다. 실외에서 다시 시도해 주세요.'),{enableHighAccuracy:false,timeout:20000,maximumAge:60000});
       });
-      mobileSlope.addEventListener('click',()=>{
-        if(slopesBox.disabled)return;slopesBox.checked=!slopesBox.checked;setLayerVisibility();renderMobileRoutes();
-      });
       const mobileAvoid=document.getElementById('mobile-avoid-stairs');
       mobileAvoid.checked=stairsBox.checked;
       mobileAvoid.addEventListener('change',()=>{stairsBox.checked=mobileAvoid.checked;recompute()});
@@ -873,7 +860,7 @@
       for(const [id,key,vals] of [['pref-up','up',{low:0,medium:5,high:12}],['pref-down','down',{low:0,medium:8,high:18}]]){
         document.querySelectorAll('#'+id+' button').forEach(btn=>btn.addEventListener('click',()=>{
           document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('active',b===btn));
-          comfortPrefs[key]=vals[btn.dataset.level];recompute();
+          comfortPrefs[key]=vals[btn.dataset.level];detailMode='comfort';chosenModes=new Set(['comfort']);recompute();
         }));
       }
       function refreshRouteSelection(){
@@ -920,7 +907,7 @@
       }
       function recompute(){
         if(!graph)return;
-        if(restRoute||restMarkers.length)clearRestVisual();restPlaces=[];restList.replaceChildren();
+        if(restRoute)clearRestVisual();
         try{
           const s=nearestNode(selectedStart),t=nearestNode(selectedEnd);
           const avoid=stairsBox.checked;
@@ -941,6 +928,7 @@
           card.classList.add('visible');card.innerHTML=routeHTML(shortest,easiest,comfort,s,t,slopeData.stats);
           shown=true;
           refreshRouteSelection();
+          if(restPlaces.length)renderRestPlaces();
           if(!shortest&&!easiest&&!comfort){shown=false;setLayerVisibility();routeButton.textContent='현재 선택 지점은 연결되지 않습니다';routeButton.disabled=true;return;}
           routeButton.disabled=false;shown=true;
           setLayerVisibility();
@@ -958,9 +946,17 @@
         field.addEventListener('click',()=>{setSearchTarget(mode);setPick(mode);input.focus()});
       }
       stairsBox.onchange=()=>recompute();
-      slopesBox.onchange=()=>setLayerVisibility();
+
       map.on('click',e=>{
         if(!graph)return;
+        if(restPick){
+          const point=[e.lngLat.lng,e.lngLat.lat];
+          const snap=nearestNode(point);
+          if(snap.d>60){restPick=false;restAdd.classList.remove('active');restAdd.textContent='＋ 지도에서 쉼터 위치 지정';mobileSheet.classList.add('rest-open');restStatus.textContent='가까운 보행 도로가 없어 경유 경로를 계산하기 어렵습니다. 도로 주변 위치를 선택해 주세요.';return}
+          restPlaces.push({id:Date.now().toString(36)+'-'+Math.round(Math.random()*99999),name:'직접 등록한 쉼터 '+(restPlaces.length+1),coords:point});
+          persistRestPlaces();restPick=false;restAdd.classList.remove('active');restAdd.textContent='＋ 지도에서 쉼터 위치 지정';
+          mobileSheet.classList.add('rest-open');renderRestPlaces();map.resize();return;
+        }
         if(!pickMode){const idx=nearestRouteEdge(e.point);if(idx>=0)showSegment(idx);return}
         const p=[e.lngLat.lng,e.lngLat.lat],snap=nearestNode(p);
         if(snap.d>90){setState(`현재 보행 도로망에서 ${Math.round(snap.d)}m 떨어져 있습니다. 가까운 도로를 선택해 주세요`,true);return}
