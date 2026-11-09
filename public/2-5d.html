@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#102743" />
-  <title>오르락 내리락 · v0.9.7</title>
+  <title>같은 거리, 다른 걸음 · v0.9.7</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist/maplibre-gl.css" />
   <style>
     *{box-sizing:border-box}html,body{height:100%;margin:0;font-family:system-ui,'Noto Sans KR',sans-serif;color:#12283e;background:#eef3f8}
@@ -414,6 +414,28 @@
           searchResults.appendChild(b);
         }
       }
+      // Search visible OpenFreeMap labels as a local fallback. These are map
+      // labels, not Kakao Places records; only visible, loaded point features
+      // can be discovered. Do not send this data to another service.
+      function visibleMapPlaces(query){
+        if(!map.isStyleLoaded())return [];
+        const q=query.replace(/\s+/g,'').toLocaleLowerCase('ko');
+        if(q.length<2)return [];
+        let features=[];
+        try{features=map.queryRenderedFeatures()}catch(_){return []}
+        const seen=new Set(),out=[];
+        for(const f of features){
+          if(f.geometry?.type!=='Point')continue;
+          const name=String(f.properties?.['name:ko']||f.properties?.name_ko||f.properties?.name||'').trim();
+          if(!name||!name.replace(/\s+/g,'').toLocaleLowerCase('ko').includes(q))continue;
+          const coords=f.geometry.coordinates;
+          if(!Array.isArray(coords)||!Number.isFinite(coords[0])||!Number.isFinite(coords[1]))continue;
+          const key=name+'|'+coords[0].toFixed(5)+'|'+coords[1].toFixed(5);
+          if(seen.has(key))continue;seen.add(key);
+          out.push({name,address:'현재 지도에 표시된 장소 · 위치 확인 필요',lng:coords[0],lat:coords[1],kind:'map'});
+        }
+        return out.slice(0,15);
+      }
       async function runPlaceSearch(){
         const seq=++searchSeq,query=searchInput.value.trim();
         if(!query){renderSearchResults([]);searchMsg('장소 이름이나 주소를 입력해 주세요.');return}
@@ -442,7 +464,7 @@
             if(seq!==searchSeq)return;
             placeResults=initialPlaces.concat(extra);
           }
-          const normalized=[];
+          const normalized=visibleMapPlaces(query);
           for(const p of placeResults)normalized.push({name:p.place_name,address:p.road_address_name||p.address_name,lng:Number(p.x),lat:Number(p.y),kind:'place'});
           for(const p of addressResults)normalized.push({name:p.address_name,address:p.address_name,lng:Number(p.x),lat:Number(p.y),kind:'address'});
           const uniq=new Map();
@@ -455,8 +477,11 @@
             const name=String(p.name||'').replace(/\s+/g,'').toLocaleLowerCase('ko');
             const address=String(p.address||'').replace(/\s+/g,'').toLocaleLowerCase('ko');
             // Lower number means higher priority: place names first, then addresses.
+            if(p.kind==='map'&&name===normalizedQuery)return -1;
             if(p.kind==='place'&&name===normalizedQuery)return 0;
+            if(p.kind==='map'&&name.startsWith(normalizedQuery))return 1;
             if(p.kind==='place'&&name.startsWith(normalizedQuery))return 1;
+            if(p.kind==='map'&&name.includes(normalizedQuery))return 2;
             if(p.kind==='place'&&name.includes(normalizedQuery))return 2;
             if(p.kind==='place'&&address.includes(normalizedQuery))return 3;
             if(p.kind==='place')return 4;
@@ -468,8 +493,13 @@
             rankResult(a)-rankResult(b)||a.name.length-b.name.length
           ).slice(0,12);
           renderSearchResults(list);
-          searchMsg(list.length?'':'검색 결과가 없습니다.');
-        }catch(err){if(seq===searchSeq)searchMsg(err.message,true)}
+          searchMsg(list.length?'':'검색 결과가 없습니다. 지도의 장소명을 보고 출발지 또는 도착지 입력칸을 선택한 뒤 지도를 눌러 지정할 수도 있습니다.');
+        }catch(err){
+          if(seq!==searchSeq)return;
+          const mapResults=visibleMapPlaces(query);
+          renderSearchResults(mapResults);
+          searchMsg(mapResults.length?'카카오 검색 연결이 원활하지 않아 현재 지도에 표시된 장소만 보여줍니다.':err.message,true);
+        }
       }
       // Automatically fetch suggestions as the user types (no search click required).
       // A short debounce minimizes duplicate Kakao API requests during typing.
@@ -898,12 +928,33 @@
         }
       }
       const pointMarkers=[];
+      const connectionSource='teetertotter-approach-lines';
+      function drawApproachLines(){
+        if(!graph||!map.isStyleLoaded())return;
+        const features=[];
+        for(const pos of [selectedStart,selectedEnd]){
+          const nearest=nearestNode(pos);
+          if(nearest.i<0||nearest.d<6||nearest.d>90)continue;
+          features.push({type:'Feature',properties:{gap_m:Math.round(nearest.d)},geometry:{type:'LineString',coordinates:[pos,graph.nodes[nearest.i]]}});
+        }
+        const data={type:'FeatureCollection',features};
+        if(map.getSource(connectionSource))map.getSource(connectionSource).setData(data);
+        else{
+          map.addSource(connectionSource,{type:'geojson',data});
+          map.addLayer({id:'teetertotter-approach-lines-layer',type:'line',source:connectionSource,
+            layout:{'line-cap':'round','line-join':'round'},
+            paint:{'line-color':'#777f87','line-width':2,'line-opacity':0.65}});
+        }
+      }
       function updatePointMarkers(){
         for(const m of pointMarkers)m.remove();pointMarkers.length=0;
         for(const [coords,color,title] of [[selectedStart,'#008e78','선택한 출발점'],[selectedEnd,'#e36d42','선택한 도착점']]){
           const el=document.createElement('div');el.style.cssText=`width:19px;height:19px;background:${color};border:3px solid white;border-radius:50%;box-shadow:0 2px 8px #0005`;
           pointMarkers.push(new maplibregl.Marker({element:el}).setLngLat(coords).setPopup(new maplibregl.Popup().setText(title)).addTo(map));
         }
+        // This short grey segment is a *provisional* map-to-network attachment,
+        // not a surveyed walkable connection. Do not add it to route distance/time.
+        drawApproachLines();
       }
       function recompute(){
         if(!graph)return;
